@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildSystemPrompt } from "@/lib/ai";
+import { ConsultationStatus } from "@prisma/client";
 
 // Create a new consultation
 export async function POST(request: Request) {
@@ -113,7 +114,10 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
+    const statusParam = searchParams.get("status");
+    const status = statusParam && Object.values(ConsultationStatus).includes(statusParam as ConsultationStatus)
+      ? (statusParam as ConsultationStatus)
+      : null;
 
     if (session.user.role === "DOCTOR") {
       // Get consultations for the doctor's portal

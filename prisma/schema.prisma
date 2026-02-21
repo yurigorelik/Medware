@@ -3,8 +3,27 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DOCTOR
+  PATIENT
+}
+
+enum ConsultationStatus {
+  ACTIVE
+  SUMMARY_GENERATED
+  UNDER_REVIEW
+  COMPLETED
+  CLOSED
+}
+
+enum MessageRole {
+  SYSTEM
+  ASSISTANT
+  USER
 }
 
 model User {
@@ -12,7 +31,7 @@ model User {
   email         String         @unique
   password      String
   name          String
-  role          String         // DOCTOR or PATIENT
+  role          Role
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   doctorProfile DoctorProfile?
@@ -35,12 +54,12 @@ model Portal {
   doctorProfile         DoctorProfile  @relation(fields: [doctorProfileId], references: [id])
   name                  String
   medicalField          String
-  instructions          String
-  guidelines            String         @default("")
-  literature            String         @default("")
-  sources               String         @default("")
-  additionalDefinitions String         @default("")
-  welcomeMessage        String         @default("")
+  instructions          String         @db.Text
+  guidelines            String         @default("") @db.Text
+  literature            String         @default("") @db.Text
+  sources               String         @default("") @db.Text
+  additionalDefinitions String         @default("") @db.Text
+  welcomeMessage        String         @default("") @db.Text
   isActive              Boolean        @default(true)
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -48,26 +67,32 @@ model Portal {
 }
 
 model Consultation {
-  id          String       @id @default(cuid())
+  id          String             @id @default(cuid())
   portalId    String
-  portal      Portal       @relation(fields: [portalId], references: [id])
+  portal      Portal             @relation(fields: [portalId], references: [id])
   patientId   String
-  patient     User         @relation(fields: [patientId], references: [id])
-  status      String       @default("ACTIVE") // ACTIVE, SUMMARY_GENERATED, UNDER_REVIEW, COMPLETED, CLOSED
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  patient     User               @relation(fields: [patientId], references: [id])
+  status      ConsultationStatus @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   messages    Message[]
   attachments Attachment[]
   summary     CaseSummary?
+
+  @@index([portalId])
+  @@index([patientId])
+  @@index([status])
 }
 
 model Message {
   id             String       @id @default(cuid())
   consultationId String
   consultation   Consultation @relation(fields: [consultationId], references: [id])
-  role           String       // SYSTEM, ASSISTANT, USER
-  content        String
+  role           MessageRole
+  content        String       @db.Text
   createdAt      DateTime     @default(now())
+
+  @@index([consultationId])
 }
 
 model Attachment {
@@ -79,15 +104,17 @@ model Attachment {
   mimetype       String
   size           Int
   createdAt      DateTime     @default(now())
+
+  @@index([consultationId])
 }
 
 model CaseSummary {
   id                    String        @id @default(cuid())
   consultationId        String        @unique
   consultation          Consultation  @relation(fields: [consultationId], references: [id])
-  summary               String
-  differentialDiagnosis String
-  suggestedWorkup       String
+  summary               String        @db.Text
+  differentialDiagnosis String        @db.Text
+  suggestedWorkup       String        @db.Text
   createdAt             DateTime      @default(now())
   review                DoctorReview?
 }
@@ -97,9 +124,9 @@ model DoctorReview {
   summaryId       String      @unique
   summary         CaseSummary @relation(fields: [summaryId], references: [id])
   approved        Boolean     @default(false)
-  editedSummary   String?
-  editedDiagnosis String?
-  editedWorkup    String?
-  doctorNotes     String?
+  editedSummary   String?     @db.Text
+  editedDiagnosis String?     @db.Text
+  editedWorkup    String?     @db.Text
+  doctorNotes     String?     @db.Text
   reviewedAt      DateTime    @default(now())
 }
