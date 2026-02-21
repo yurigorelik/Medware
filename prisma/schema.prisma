@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  name          String
+  role          String         // DOCTOR or PATIENT
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  doctorProfile DoctorProfile?
+  consultations Consultation[]
+}
+
+model DoctorProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id])
+  specialty     String
+  bio           String?
+  licenseNumber String?
+  portal        Portal?
+}
+
+model Portal {
+  id                    String         @id @default(cuid())
+  doctorProfileId       String         @unique
+  doctorProfile         DoctorProfile  @relation(fields: [doctorProfileId], references: [id])
+  name                  String
+  medicalField          String
+  instructions          String
+  guidelines            String         @default("")
+  literature            String         @default("")
+  sources               String         @default("")
+  additionalDefinitions String         @default("")
+  welcomeMessage        String         @default("")
+  isActive              Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  consultations         Consultation[]
+}
+
+model Consultation {
+  id          String       @id @default(cuid())
+  portalId    String
+  portal      Portal       @relation(fields: [portalId], references: [id])
+  patientId   String
+  patient     User         @relation(fields: [patientId], references: [id])
+  status      String       @default("ACTIVE") // ACTIVE, SUMMARY_GENERATED, UNDER_REVIEW, COMPLETED, CLOSED
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  messages    Message[]
+  attachments Attachment[]
+  summary     CaseSummary?
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  role           String       // SYSTEM, ASSISTANT, USER
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model Attachment {
+  id             String       @id @default(cuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  filename       String
+  filepath       String
+  mimetype       String
+  size           Int
+  createdAt      DateTime     @default(now())
+}
+
+model CaseSummary {
+  id                    String        @id @default(cuid())
+  consultationId        String        @unique
+  consultation          Consultation  @relation(fields: [consultationId], references: [id])
+  summary               String
+  differentialDiagnosis String
+  suggestedWorkup       String
+  createdAt             DateTime      @default(now())
+  review                DoctorReview?
+}
+
+model DoctorReview {
+  id              String      @id @default(cuid())
+  summaryId       String      @unique
+  summary         CaseSummary @relation(fields: [summaryId], references: [id])
+  approved        Boolean     @default(false)
+  editedSummary   String?
+  editedDiagnosis String?
+  editedWorkup    String?
+  doctorNotes     String?
+  reviewedAt      DateTime    @default(now())
+}
