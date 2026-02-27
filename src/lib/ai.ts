@@ -4,6 +4,8 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const AI_MODEL = process.env.AI_MODEL || "claude-sonnet-4-6";
+
 interface PortalConfig {
   doctorName: string;
   medicalField: string;
@@ -110,7 +112,7 @@ export async function getChatResponse(
   );
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: AI_MODEL,
     max_tokens: 2048,
     system: systemPrompt,
     messages: anthropicMessages,
@@ -147,7 +149,7 @@ Based on the following consultation conversation, generate a comprehensive case 
 ${conversationText}`;
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: AI_MODEL,
     max_tokens: 4096,
     messages: [
       {
