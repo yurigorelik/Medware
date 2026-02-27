@@ -28,33 +28,92 @@ export default function DoctorDashboard() {
   const [portal, setPortal] = useState<Portal | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [messageModal, setMessageModal] = useState<Consultation | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [portalRes, consRes] = await Promise.all([
-          fetch("/api/portal"),
-          fetch("/api/consultation"),
-        ]);
+    loadDashboard();
+  }, []);
 
-        const portalData = await portalRes.json();
-        if (portalData && portalData.id) {
-          setPortal(portalData);
-        }
+  async function loadDashboard() {
+    try {
+      const [portalRes, consRes] = await Promise.all([
+        fetch("/api/portal"),
+        fetch("/api/consultation"),
+      ]);
 
-        if (consRes.ok) {
-          const consData = await consRes.json();
-          setConsultations(Array.isArray(consData) ? consData : []);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard:", error);
-      } finally {
-        setLoading(false);
+      const portalData = await portalRes.json();
+      if (portalData && portalData.id) {
+        setPortal(portalData);
       }
+
+      if (consRes.ok) {
+        const consData = await consRes.json();
+        setConsultations(Array.isArray(consData) ? consData : []);
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDelete(consultationId: string, patientName: string) {
+    if (!confirm(`Are you sure you want to delete the consultation with ${patientName}? This action cannot be undone.`)) {
+      return;
     }
 
-    load();
-  }, []);
+    setDeleting(consultationId);
+    try {
+      const res = await fetch(`/api/consultation/${consultationId}/delete`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setConsultations((prev) => prev.filter((c) => c.id !== consultationId));
+        setActionMessage("Consultation deleted.");
+        setTimeout(() => setActionMessage(""), 3000);
+      } else {
+        const data = await res.json();
+        setActionMessage(data.error || "Failed to delete consultation.");
+      }
+    } catch {
+      setActionMessage("Failed to delete consultation.");
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!messageModal || !messageText.trim()) return;
+
+    setSendingMessage(true);
+    try {
+      const res = await fetch(`/api/consultation/${messageModal.id}/doctor-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageText.trim() }),
+      });
+
+      if (res.ok) {
+        setMessageModal(null);
+        setMessageText("");
+        setActionMessage("Message sent to patient.");
+        setTimeout(() => setActionMessage(""), 3000);
+      } else {
+        const data = await res.json();
+        setActionMessage(data.error || "Failed to send message.");
+      }
+    } catch {
+      setActionMessage("Failed to send message.");
+    } finally {
+      setSendingMessage(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -84,6 +143,52 @@ export default function DoctorDashboard() {
           Manage your portal and review patient consultations
         </p>
       </div>
+
+      {/* Action Message */}
+      {actionMessage && (
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${actionMessage.includes("Failed") || actionMessage.includes("error") ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+          {actionMessage}
+        </div>
+      )}
+
+      {/* Message Modal */}
+      {messageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 shadow-xl">
+            <h3 className="font-semibold mb-1">Message Patient</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Send an email to {messageModal.patient.name} ({messageModal.patient.email})
+            </p>
+            <form onSubmit={handleSendMessage}>
+              <textarea
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                className="textarea-field mb-4"
+                rows={5}
+                placeholder="Type your message to the patient..."
+                autoFocus
+                required
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setMessageModal(null); setMessageText(""); }}
+                  className="btn-secondary text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary text-sm"
+                  disabled={sendingMessage || !messageText.trim()}
+                >
+                  {sendingMessage ? "Sending..." : "Send Email"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Portal Status */}
       {!portal ? (
@@ -163,16 +268,37 @@ export default function DoctorDashboard() {
                 <div>
                   <div className="font-medium">{c.patient.name}</div>
                   <div className="text-sm text-gray-500">
-                    {c._count.messages} messages &middot;{" "}
+                    {c.patient.email} &middot; {c._count.messages} messages &middot;{" "}
                     {new Date(c.updatedAt).toLocaleDateString()}
                   </div>
                 </div>
-                <Link
-                  href={`/doctor/consultations/${c.id}`}
-                  className="btn-primary text-sm"
-                >
-                  Review
-                </Link>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMessageModal(c)}
+                    className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
+                    title="Message patient"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <Link
+                    href={`/doctor/consultations/${c.id}`}
+                    className="btn-primary text-sm"
+                  >
+                    Review
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(c.id, c.patient.name)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                    title="Delete consultation"
+                    disabled={deleting === c.id}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -205,11 +331,11 @@ export default function DoctorDashboard() {
                 <div>
                   <div className="font-medium">{c.patient.name}</div>
                   <div className="text-sm text-gray-500">
-                    {c._count.messages} messages &middot;{" "}
+                    {c.patient.email} &middot; {c._count.messages} messages &middot;{" "}
                     {new Date(c.updatedAt).toLocaleDateString()}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span
                     className={
                       c.status === "ACTIVE"
@@ -219,14 +345,39 @@ export default function DoctorDashboard() {
                           : "badge-pending"
                     }
                   >
-                    {c.status.replace("_", " ")}
+                    {c.status.replace(/_/g, " ")}
                   </span>
+                  <button
+                    onClick={() => setMessageModal(c)}
+                    className="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
+                    title="Message patient"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </button>
                   <Link
                     href={`/doctor/consultations/${c.id}`}
-                    className="btn-secondary text-sm"
+                    className={
+                      c.status === "SUMMARY_GENERATED" && !c.summary?.review
+                        ? "btn-primary text-sm"
+                        : "btn-secondary text-sm"
+                    }
                   >
-                    View
+                    {c.status === "SUMMARY_GENERATED" && !c.summary?.review
+                      ? "Review"
+                      : "View"}
                   </Link>
+                  <button
+                    onClick={() => handleDelete(c.id, c.patient.name)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                    title="Delete consultation"
+                    disabled={deleting === c.id}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}
