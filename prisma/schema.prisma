@@ -27,15 +27,38 @@ enum MessageRole {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  password      String
-  name          String
-  role          Role
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  doctorProfile DoctorProfile?
-  consultations Consultation[]
+  id                     String         @id @default(cuid())
+  email                  String         @unique
+  password               String
+  name                   String
+  role                   Role
+  emailVerified          Boolean        @default(false)
+  emailVerificationToken String?        @unique
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  doctorProfile          DoctorProfile?
+  consultations          Consultation[]
+  patientProfile         PatientProfile?
+}
+
+model PatientProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  dateOfBirth      String?
+  gender           String?
+  phone            String?
+  address          String?
+  emergencyContact String?
+  medicalHistory   String?  @db.Text
+  currentMedications String? @db.Text
+  allergies        String?  @db.Text
+  pastProcedures   String?  @db.Text
+  familyHistory    String?  @db.Text
+  socialHistory    String?  @db.Text
+  insuranceInfo    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model DoctorProfile {

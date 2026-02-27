@@ -190,9 +190,18 @@ export async function POST(
       data: { updatedAt: new Date() },
     });
 
+    // Check if AI has gathered enough information (look for summary-readiness signals)
+    const totalMessages = allMessages.filter((m) => m.role !== "SYSTEM").length;
+    const readyForSummary =
+      totalMessages >= 6 &&
+      /(?:I (?:now )?have (?:enough|sufficient|all the) (?:information|details)|(?:ready|enough information) (?:to |for )(?:generate|create|prepare|compile|provide) (?:a |the )?(?:case |medical )?summary|you (?:can|may) (?:now )?request (?:a |the )?(?:case )?summary|all (?:the )?(?:necessary |relevant )?information (?:has been |is )(?:gathered|collected|obtained)|shall I (?:go ahead and |now )?(?:generate|create|prepare) (?:a |the )?summary)/i.test(
+        aiResponse
+      );
+
     return NextResponse.json({
       userMessage,
       assistantMessage,
+      readyForSummary,
     });
   } catch (error) {
     console.error("Message send error:", error);

@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -67,23 +66,8 @@ export default function SignUpPage() {
         return;
       }
 
-      // Auto sign in after registration
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError(result.error);
-      } else {
-        router.push(
-          formData.role === "DOCTOR"
-            ? "/doctor/dashboard"
-            : "/patient/dashboard"
-        );
-        router.refresh();
-      }
+      // Redirect to verify email page
+      router.push("/auth/verify-email");
     } catch {
       setError("An unexpected error occurred");
     } finally {
