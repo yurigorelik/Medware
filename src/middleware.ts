@@ -6,6 +6,11 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    // Protect admin routes
+    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/auth/signin", req.url));
+    }
+
     // Protect doctor routes
     if (path.startsWith("/doctor") && token?.role !== "DOCTOR") {
       return NextResponse.redirect(new URL("/auth/signin", req.url));
@@ -26,5 +31,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/doctor/:path*", "/patient/:path*"],
+  matcher: ["/doctor/:path*", "/patient/:path*", "/admin/:path*"],
 };

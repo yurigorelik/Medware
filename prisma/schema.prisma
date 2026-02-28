@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   DOCTOR
   PATIENT
+  ADMIN
 }
 
 enum ConsultationStatus {
@@ -32,10 +33,12 @@ model User {
   password               String
   name                   String
   role                   Role
+  isBlocked              Boolean        @default(false)
   emailVerified          Boolean        @default(false)
   emailVerificationToken String?        @unique
   passwordResetToken     String?        @unique
   passwordResetExpires   DateTime?
+  lastActiveAt           DateTime?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   doctorProfile          DoctorProfile?
@@ -116,6 +119,8 @@ model Message {
   consultation   Consultation @relation(fields: [consultationId], references: [id])
   role           MessageRole
   content        String       @db.Text
+  inputTokens    Int          @default(0)
+  outputTokens   Int          @default(0)
   createdAt      DateTime     @default(now())
 
   @@index([consultationId])
@@ -155,4 +160,15 @@ model DoctorReview {
   editedWorkup    String?     @db.Text
   doctorNotes     String?     @db.Text
   reviewedAt      DateTime    @default(now())
+}
+
+model SystemSettings {
+  id         String   @id @default("singleton")
+  smtpHost   String   @default("")
+  smtpPort   Int      @default(587)
+  smtpSecure Boolean  @default(false)
+  smtpUser   String   @default("")
+  smtpPass   String   @default("")
+  smtpFrom   String   @default("")
+  updatedAt  DateTime @updatedAt
 }

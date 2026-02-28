@@ -1,15 +1,63 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { prisma } from "./prisma";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: parseInt(process.env.SMTP_PORT || "587"),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+async function getSmtpSettings() {
+  try {
+    const settings = await prisma.systemSettings.findUnique({
+      where: { id: "singleton" },
+    });
+
+    if (settings && settings.smtpUser && settings.smtpPass) {
+      return {
+        host: settings.smtpHost || "smtp.gmail.com",
+        port: settings.smtpPort || 587,
+        secure: settings.smtpSecure,
+        user: settings.smtpUser,
+        pass: settings.smtpPass,
+        from: settings.smtpFrom || `"MedWare" <${settings.smtpUser}>`,
+      };
+    }
+  } catch {
+    // DB not available yet or table doesn't exist - fall through to env vars
+  }
+
+  // Fallback to environment variables
+  return {
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_SECURE === "true",
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+    from: process.env.SMTP_FROM || '"MedWare" <noreply@medware.com>',
+  };
+}
+
+async function createTransporter() {
+  const smtp = await getSmtpSettings();
+
+  if (!smtp.user || !smtp.pass) {
+    throw new Error(
+      "SMTP email credentials are not configured. Please set up email settings in Admin > Settings."
+    );
+  }
+
+  return {
+    transporter: nodemailer.createTransport({
+      host: smtp.host,
+      port: smtp.port,
+      secure: smtp.secure,
+      auth: {
+        user: smtp.user,
+        pass: smtp.pass,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+    }),
+    from: smtp.from,
+  };
+}
 
 export function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString("hex");
@@ -20,11 +68,12 @@ export async function sendVerificationEmail(
   name: string,
   token: string
 ): Promise<void> {
+  const { transporter, from } = await createTransporter();
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const verificationUrl = `${baseUrl}/api/verify-email?token=${token}`;
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || '"MedWare" <noreply@medware.com>',
+    from,
     to: email,
     subject: "Verify your MedWare account",
     html: `
@@ -65,11 +114,12 @@ export async function sendPasswordResetEmail(
   name: string,
   token: string
 ): Promise<void> {
+  const { transporter, from } = await createTransporter();
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || '"MedWare" <noreply@medware.com>',
+    from,
     to: email,
     subject: "Reset your MedWare password",
     html: `
@@ -115,11 +165,12 @@ export async function sendDoctorMessage(
   message: string,
   consultationId: string
 ): Promise<void> {
+  const { transporter, from } = await createTransporter();
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const consultationUrl = `${baseUrl}/patient/consultation/${consultationId}/summary`;
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || '"MedWare" <noreply@medware.com>',
+    from,
     to: patientEmail,
     subject: `Message from Dr. ${doctorName} - MedWare`,
     html: `
