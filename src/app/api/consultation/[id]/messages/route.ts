@@ -169,18 +169,20 @@ export async function POST(
     }
 
     // Get AI response
-    const aiResponse = await getChatResponse(
+    const aiResult = await getChatResponse(
       systemMessage?.content || "",
       chatMessages,
       imageAttachments
     );
 
-    // Save AI response
+    // Save AI response with token usage
     const assistantMessage = await prisma.message.create({
       data: {
         consultationId: params.id,
         role: "ASSISTANT",
-        content: aiResponse,
+        content: aiResult.text,
+        inputTokens: aiResult.inputTokens,
+        outputTokens: aiResult.outputTokens,
       },
     });
 
@@ -195,7 +197,7 @@ export async function POST(
     const readyForSummary =
       totalMessages >= 6 &&
       /(?:I (?:now )?have (?:enough|sufficient|all the) (?:information|details)|(?:ready|enough information) (?:to |for )(?:generate|create|prepare|compile|provide) (?:a |the )?(?:case |medical )?summary|you (?:can|may) (?:now )?request (?:a |the )?(?:case )?summary|all (?:the )?(?:necessary |relevant )?information (?:has been |is )(?:gathered|collected|obtained)|shall I (?:go ahead and |now )?(?:generate|create|prepare) (?:a |the )?summary)/i.test(
-        aiResponse
+        aiResult.text
       );
 
     return NextResponse.json({

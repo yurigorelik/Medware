@@ -83,6 +83,19 @@ export async function POST(
       chatMessages
     );
 
+    // Track token usage on a placeholder message
+    if (result.inputTokens || result.outputTokens) {
+      await prisma.message.create({
+        data: {
+          consultationId: params.id,
+          role: "SYSTEM",
+          content: "[Summary generation]",
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+        },
+      });
+    }
+
     // Save summary
     const summary = await prisma.caseSummary.create({
       data: {

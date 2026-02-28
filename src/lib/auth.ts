@@ -24,6 +24,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
+        if (user.isBlocked) {
+          throw new Error("Your account has been blocked. Please contact support.");
+        }
+
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password
@@ -36,6 +40,12 @@ export const authOptions: NextAuthOptions = {
         if (!user.emailVerified) {
           throw new Error("Please verify your email before signing in. Check your inbox for the verification link.");
         }
+
+        // Update last active timestamp
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastActiveAt: new Date() },
+        });
 
         return {
           id: user.id,

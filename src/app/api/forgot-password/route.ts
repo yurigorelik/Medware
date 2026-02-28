@@ -35,7 +35,29 @@ export async function POST(req: Request) {
       },
     });
 
-    await sendPasswordResetEmail(user.email, user.name, token);
+    try {
+      await sendPasswordResetEmail(user.email, user.name, token);
+    } catch (emailError: any) {
+      console.error("Email sending error:", emailError);
+      // Clear the token since the email failed
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: null,
+          passwordResetExpires: null,
+        },
+      });
+
+      const isConfigError = emailError?.message?.includes("not configured");
+      return NextResponse.json(
+        {
+          error: isConfigError
+            ? "Email service is not configured. Please contact the administrator to set up SMTP email settings."
+            : "Failed to send reset email. Please try again later or contact the administrator.",
+        },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json({
       message: "If an account with that email exists, a password reset link has been sent.",
