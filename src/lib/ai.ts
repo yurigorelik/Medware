@@ -110,7 +110,7 @@ export async function getChatResponse(
   );
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2048,
     system: systemPrompt,
     messages: anthropicMessages,
@@ -147,7 +147,7 @@ Based on the following consultation conversation, generate a comprehensive case 
 ${conversationText}`;
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 4096,
     messages: [
       {

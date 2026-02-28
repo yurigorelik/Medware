@@ -68,6 +68,7 @@ model DoctorProfile {
   specialty     String
   bio           String?
   licenseNumber String?
+  photoUrl      String?
   portal        Portal?
 }
 

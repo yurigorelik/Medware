@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// List all doctors with active portals
+// List all doctors with active portals, ordered by most active (consultation count)
 export async function GET() {
   try {
     const doctors = await prisma.doctorProfile.findMany({
@@ -22,12 +22,22 @@ export async function GET() {
             name: true,
             medicalField: true,
             welcomeMessage: true,
+            _count: {
+              select: { consultations: true },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(doctors);
+    // Sort by consultation count descending (most active first)
+    const sorted = doctors.sort((a, b) => {
+      const countA = a.portal?._count?.consultations ?? 0;
+      const countB = b.portal?._count?.consultations ?? 0;
+      return countB - countA;
+    });
+
+    return NextResponse.json(sorted);
   } catch (error) {
     console.error("Doctors fetch error:", error);
     return NextResponse.json(

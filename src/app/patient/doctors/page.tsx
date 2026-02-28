@@ -7,6 +7,7 @@ interface Doctor {
   id: string;
   specialty: string;
   bio: string | null;
+  photoUrl: string | null;
   user: { name: string; email: string };
   portal: {
     id: string;
@@ -90,11 +91,19 @@ export default function BrowseDoctorsPage() {
           {doctors.map((doc) => (
             <div key={doc.id} className="card flex flex-col">
               <div className="flex items-start gap-3 mb-4">
-                <div className="h-12 w-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary-700 font-bold text-lg">
-                    {doc.user.name.charAt(0)}
-                  </span>
-                </div>
+                {doc.photoUrl ? (
+                  <img
+                    src={doc.photoUrl}
+                    alt={`Dr. ${doc.user.name}`}
+                    className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-12 w-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary-700 font-bold text-lg">
+                      {doc.user.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <h3 className="font-semibold text-lg">
                     Dr. {doc.user.name}
