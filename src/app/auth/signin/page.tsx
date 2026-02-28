@@ -85,6 +85,15 @@ function SignInForm() {
           </button>
         </form>
 
+        <div className="mt-3 text-center">
+          <Link
+            href="/auth/forgot-password"
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          >
+            Forgot your password?
+          </Link>
+        </div>
+
         <p className="mt-4 text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
           <Link
