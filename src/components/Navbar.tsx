@@ -9,9 +9,11 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const dashboardLink =
-    session?.user?.role === "DOCTOR"
-      ? "/doctor/dashboard"
-      : "/patient/dashboard";
+    session?.user?.role === "ADMIN"
+      ? "/admin/dashboard"
+      : session?.user?.role === "DOCTOR"
+        ? "/doctor/dashboard"
+        : "/patient/dashboard";
 
   return (
     <nav className="bg-white border-b border-gray-200 h-16">

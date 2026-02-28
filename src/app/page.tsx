@@ -30,9 +30,11 @@ export default function Home() {
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       const dashboardPath =
-        session.user.role === "DOCTOR"
-          ? "/doctor/dashboard"
-          : "/patient/dashboard";
+        session.user.role === "ADMIN"
+          ? "/admin/dashboard"
+          : session.user.role === "DOCTOR"
+            ? "/doctor/dashboard"
+            : "/patient/dashboard";
       router.replace(dashboardPath);
     }
   }, [status, session, router]);

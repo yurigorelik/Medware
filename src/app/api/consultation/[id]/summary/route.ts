@@ -83,6 +83,17 @@ export async function POST(
       chatMessages
     );
 
+    // Record token usage
+    await prisma.tokenUsage.create({
+      data: {
+        userId: session.user.id,
+        inputTokens: result.tokenUsage.inputTokens,
+        outputTokens: result.tokenUsage.outputTokens,
+        model: result.tokenUsage.model,
+        endpoint: "summary",
+      },
+    });
+
     // Save summary
     const summary = await prisma.caseSummary.create({
       data: {

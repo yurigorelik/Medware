@@ -16,6 +16,11 @@ export default withAuth(
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
 
+    // Protect admin routes
+    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/auth/signin", req.url));
+    }
+
     return NextResponse.next();
   },
   {
@@ -26,5 +31,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/doctor/:path*", "/patient/:path*"],
+  matcher: ["/doctor/:path*", "/patient/:path*", "/admin/:path*"],
 };

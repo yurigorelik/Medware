@@ -20,6 +20,12 @@ interface ChatMessage {
   content: string;
 }
 
+export interface AITokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+}
+
 export function buildSystemPrompt(config: PortalConfig): string {
   let prompt = `You are a medical AI assistant operating within Dr. ${config.doctorName}'s consultation portal, specializing in ${config.medicalField}.
 
@@ -68,7 +74,7 @@ export async function getChatResponse(
   systemPrompt: string,
   messages: ChatMessage[],
   imageAttachments?: { base64: string; mediaType: string }[]
-): Promise<string> {
+): Promise<{ text: string; tokenUsage: AITokenUsage }> {
   const anthropicMessages: Anthropic.MessageParam[] = messages.map(
     (msg, index) => {
       if (
@@ -117,7 +123,15 @@ export async function getChatResponse(
   });
 
   const textBlock = response.content.find((block) => block.type === "text");
-  return textBlock ? (textBlock as Anthropic.TextBlock).text : "";
+  const text = textBlock ? (textBlock as Anthropic.TextBlock).text : "";
+  return {
+    text,
+    tokenUsage: {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      model: "claude-sonnet-4-6",
+    },
+  };
 }
 
 export async function generateCaseSummary(
@@ -127,6 +141,7 @@ export async function generateCaseSummary(
   summary: string;
   differentialDiagnosis: string;
   suggestedWorkup: string;
+  tokenUsage: AITokenUsage;
 }> {
   const conversationText = messages
     .map((msg) => `${msg.role === "user" ? "Patient" : "AI Assistant"}: ${msg.content}`)
@@ -162,6 +177,12 @@ ${conversationText}`;
     ? (textBlock as Anthropic.TextBlock).text
     : "";
 
+  const tokenUsage: AITokenUsage = {
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+    model: "claude-sonnet-4-6",
+  };
+
   try {
     const parsed = JSON.parse(responseText);
     return {
@@ -170,12 +191,14 @@ ${conversationText}`;
         parsed.differentialDiagnosis || "Unable to generate differential diagnosis",
       suggestedWorkup:
         parsed.suggestedWorkup || "Unable to generate suggested workup",
+      tokenUsage,
     };
   } catch {
     return {
       summary: responseText,
       differentialDiagnosis: "Error parsing AI response. Please review the summary above.",
       suggestedWorkup: "Error parsing AI response. Please review the summary above.",
+      tokenUsage,
     };
   }
 }

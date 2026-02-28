@@ -169,7 +169,7 @@ export async function POST(
     }
 
     // Get AI response
-    const aiResponse = await getChatResponse(
+    const { text: aiResponse, tokenUsage } = await getChatResponse(
       systemMessage?.content || "",
       chatMessages,
       imageAttachments
@@ -181,6 +181,17 @@ export async function POST(
         consultationId: params.id,
         role: "ASSISTANT",
         content: aiResponse,
+      },
+    });
+
+    // Record token usage
+    await prisma.tokenUsage.create({
+      data: {
+        userId: session.user.id,
+        inputTokens: tokenUsage.inputTokens,
+        outputTokens: tokenUsage.outputTokens,
+        model: tokenUsage.model,
+        endpoint: "chat",
       },
     });
 

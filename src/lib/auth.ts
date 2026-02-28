@@ -37,6 +37,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Please verify your email before signing in. Check your inbox for the verification link.");
         }
 
+        if (user.isBlocked) {
+          throw new Error("Your account has been blocked. Please contact an administrator.");
+        }
+
         return {
           id: user.id,
           email: user.email,

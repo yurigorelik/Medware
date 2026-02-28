@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   DOCTOR
   PATIENT
+  ADMIN
 }
 
 enum ConsultationStatus {
@@ -32,6 +33,7 @@ model User {
   password               String
   name                   String
   role                   Role
+  isBlocked              Boolean        @default(false)
   emailVerified          Boolean        @default(false)
   emailVerificationToken String?        @unique
   createdAt              DateTime       @default(now())
@@ -39,6 +41,7 @@ model User {
   doctorProfile          DoctorProfile?
   consultations          Consultation[]
   patientProfile         PatientProfile?
+  tokenUsages            TokenUsage[]
 }
 
 model PatientProfile {
@@ -153,4 +156,17 @@ model DoctorReview {
   editedWorkup    String?     @db.Text
   doctorNotes     String?     @db.Text
   reviewedAt      DateTime    @default(now())
+}
+
+model TokenUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputTokens  Int
+  outputTokens Int
+  model        String
+  endpoint     String
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
 }
