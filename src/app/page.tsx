@@ -1,6 +1,71 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+interface Doctor {
+  id: string;
+  specialty: string;
+  bio: string | null;
+  photoUrl: string | null;
+  user: { name: string; email: string };
+  portal: {
+    id: string;
+    name: string;
+    medicalField: string;
+    welcomeMessage: string;
+    _count: { consultations: number };
+  } | null;
+}
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+
+  // Redirect signed-in users to their dashboard
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const dashboardPath =
+        session.user.role === "DOCTOR"
+          ? "/doctor/dashboard"
+          : "/patient/dashboard";
+      router.replace(dashboardPath);
+    }
+  }, [status, session, router]);
+
+  // Fetch available doctors for the showcase
+  useEffect(() => {
+    if (status !== "unauthenticated") return;
+
+    const loadDoctors = async () => {
+      try {
+        const res = await fetch("/api/doctors");
+        if (res.ok) {
+          const data = await res.json();
+          setDoctors(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error("Failed to load doctors:", error);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    loadDoctors();
+  }, [status]);
+
+  // Show loading while determining auth state
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -31,6 +96,114 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Doctor Showcase */}
+      {!loadingDoctors && doctors.length > 0 && (
+        <div className="bg-white py-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Our Doctors
+              </h2>
+              <p className="mt-3 text-lg text-gray-600">
+                Browse our network of qualified physicians ready to help
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {doctors.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-primary-200 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    {doc.photoUrl ? (
+                      <img
+                        src={doc.photoUrl}
+                        alt={`Dr. ${doc.user.name}`}
+                        className="h-12 w-12 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary-700 font-bold text-lg">
+                          {doc.user.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        Dr. {doc.user.name}
+                      </h3>
+                      <p className="text-sm text-primary-600 truncate">
+                        {doc.specialty}
+                      </p>
+                    </div>
+                  </div>
+
+                  {doc.portal && (
+                    <div className="mb-3">
+                      <span className="inline-block text-xs font-medium bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full">
+                        {doc.portal.medicalField}
+                      </span>
+                    </div>
+                  )}
+
+                  {doc.bio && (
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      {doc.bio}
+                    </p>
+                  )}
+
+                  {doc.portal && doc.portal._count.consultations > 0 && (
+                    <p className="text-xs text-gray-400">
+                      {doc.portal._count.consultations} consultation{doc.portal._count.consultations !== 1 ? "s" : ""} completed
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <Link
+                href="/auth/signup"
+                className="text-primary-600 hover:text-primary-700 font-semibold text-sm"
+              >
+                Sign up to start a consultation with any doctor <span aria-hidden="true">&rarr;</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state for doctors */}
+      {loadingDoctors && (
+        <div className="bg-white py-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                Our Doctors
+              </h2>
+              <p className="mt-3 text-lg text-gray-600">
+                Loading available physicians...
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-12 w-12 bg-gray-200 rounded-full flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                  <div className="h-3 bg-gray-200 rounded w-1/3 mb-3" />
+                  <div className="h-3 bg-gray-200 rounded w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* How It Works */}
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
