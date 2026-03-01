@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     try {
       await sendPasswordResetEmail(user.email, user.name, token);
-    } catch (emailError: any) {
+    } catch (emailError) {
       console.error("Email sending error:", emailError);
       // Clear the token since the email failed
       await prisma.user.update({
@@ -48,12 +48,9 @@ export async function POST(req: Request) {
         },
       });
 
-      const isConfigError = emailError?.message?.includes("not configured");
       return NextResponse.json(
         {
-          error: isConfigError
-            ? "Email service is not configured. Please contact the administrator to set up SMTP email settings."
-            : "Failed to send reset email. Please try again later or contact the administrator.",
+          error: "Failed to send reset email. Please try again later.",
         },
         { status: 503 }
       );

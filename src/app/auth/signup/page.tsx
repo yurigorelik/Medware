@@ -66,8 +66,8 @@ export default function SignUpPage() {
         return;
       }
 
-      // Redirect to verify email page
-      router.push("/auth/verify-email");
+      // Redirect to sign in page
+      router.push("/auth/signin");
     } catch {
       setError("An unexpected error occurred");
     } finally {

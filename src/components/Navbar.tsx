@@ -59,22 +59,13 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                   {session.user.role === "ADMIN" && (
-                    <>
-                      <Link
-                        href="/admin/users"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Manage Users
-                      </Link>
-                      <Link
-                        href="/admin/settings"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Email Settings
-                      </Link>
-                    </>
+                    <Link
+                      href="/admin/users"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Manage Users
+                    </Link>
                   )}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}

@@ -63,7 +63,7 @@ export async function POST(
     } catch (emailError) {
       console.error("Failed to send email:", emailError);
       return NextResponse.json(
-        { error: "Failed to send email. Please check SMTP configuration." },
+        { error: "Failed to send email. Please try again later." },
         { status: 500 }
       );
     }
