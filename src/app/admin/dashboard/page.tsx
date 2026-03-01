@@ -74,14 +74,9 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">Platform overview and management</p>
         </div>
-        <div className="flex space-x-3">
-          <Link href="/admin/users" className="btn-primary text-sm">
-            Manage Users
-          </Link>
-          <Link href="/admin/settings" className="btn-secondary text-sm">
-            Email Settings
-          </Link>
-        </div>
+        <Link href="/admin/users" className="btn-primary text-sm">
+          Manage Users
+        </Link>
       </div>
 
       {/* Stats Grid */}

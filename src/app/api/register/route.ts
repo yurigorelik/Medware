@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { generateVerificationToken, sendVerificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +30,6 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const verificationToken = generateVerificationToken();
 
     const user = await prisma.user.create({
       data: {
@@ -39,8 +37,7 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         role,
-        emailVerified: false,
-        emailVerificationToken: verificationToken,
+        emailVerified: true,
         ...(role === "DOCTOR" && {
           doctorProfile: {
             create: {
@@ -52,19 +49,10 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send verification email
-    try {
-      await sendVerificationEmail(email, name, verificationToken);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
-      // Still return success - user can request resend
-    }
-
     return NextResponse.json(
       {
-        message: "Account created. Please check your email to verify your account.",
+        message: "Account created successfully. You can now sign in.",
         userId: user.id,
-        requiresVerification: true,
       },
       { status: 201 }
     );
