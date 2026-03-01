@@ -26,17 +26,6 @@ async function main() {
     console.log("Admin user already exists");
   }
 
-  // Create default system settings if they don't exist
-  const settings = await prisma.systemSettings.findUnique({
-    where: { id: "singleton" },
-  });
-
-  if (!settings) {
-    await prisma.systemSettings.create({
-      data: { id: "singleton" },
-    });
-    console.log("Default system settings created");
-  }
 }
 
 main()
