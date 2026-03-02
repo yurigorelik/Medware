@@ -41,19 +41,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for existing active consultation
-    const existing = await prisma.consultation.findFirst({
-      where: {
-        portalId,
-        patientId: session.user.id,
-        status: "ACTIVE",
-      },
-    });
-
-    if (existing) {
-      return NextResponse.json(existing);
-    }
-
     const consultation = await prisma.consultation.create({
       data: {
         portalId,
