@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildSystemPrompt } from "@/lib/ai";
+import { buildSystemPrompt, buildPatientMedicalSummary } from "@/lib/ai";
 import { ConsultationStatus } from "@prisma/client";
 
 // Create a new consultation
@@ -41,6 +41,11 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch patient medical profile for context
+    const patientProfile = await prisma.patientProfile.findUnique({
+      where: { userId: session.user.id },
+    });
+
     const consultation = await prisma.consultation.create({
       data: {
         portalId,
@@ -48,17 +53,25 @@ export async function POST(request: Request) {
       },
     });
 
+    // Build patient medical summary from profile
+    const patientSummary = patientProfile
+      ? buildPatientMedicalSummary(patientProfile)
+      : undefined;
+
     // Build system prompt and create initial AI message
-    const systemPrompt = buildSystemPrompt({
-      doctorName: portal.doctorProfile.user.name,
-      medicalField: portal.medicalField,
-      instructions: portal.instructions,
-      guidelines: portal.guidelines,
-      literature: portal.literature,
-      sources: portal.sources,
-      additionalDefinitions: portal.additionalDefinitions,
-      welcomeMessage: portal.welcomeMessage,
-    });
+    const systemPrompt = buildSystemPrompt(
+      {
+        doctorName: portal.doctorProfile.user.name,
+        medicalField: portal.medicalField,
+        instructions: portal.instructions,
+        guidelines: portal.guidelines,
+        literature: portal.literature,
+        sources: portal.sources,
+        additionalDefinitions: portal.additionalDefinitions,
+        welcomeMessage: portal.welcomeMessage,
+      },
+      patientSummary
+    );
 
     // Store the system prompt as a system message
     await prisma.message.create({

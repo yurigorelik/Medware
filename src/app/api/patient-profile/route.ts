@@ -37,16 +37,12 @@ export async function PUT(request: Request) {
     const {
       dateOfBirth,
       gender,
-      phone,
-      address,
-      emergencyContact,
       medicalHistory,
       currentMedications,
       allergies,
       pastProcedures,
       familyHistory,
       socialHistory,
-      insuranceInfo,
     } = body;
 
     const profile = await prisma.patientProfile.upsert({
@@ -54,31 +50,23 @@ export async function PUT(request: Request) {
       update: {
         dateOfBirth: dateOfBirth || null,
         gender: gender || null,
-        phone: phone || null,
-        address: address || null,
-        emergencyContact: emergencyContact || null,
         medicalHistory: medicalHistory || null,
         currentMedications: currentMedications || null,
         allergies: allergies || null,
         pastProcedures: pastProcedures || null,
         familyHistory: familyHistory || null,
         socialHistory: socialHistory || null,
-        insuranceInfo: insuranceInfo || null,
       },
       create: {
         userId: session.user.id,
         dateOfBirth: dateOfBirth || null,
         gender: gender || null,
-        phone: phone || null,
-        address: address || null,
-        emergencyContact: emergencyContact || null,
         medicalHistory: medicalHistory || null,
         currentMedications: currentMedications || null,
         allergies: allergies || null,
         pastProcedures: pastProcedures || null,
         familyHistory: familyHistory || null,
         socialHistory: socialHistory || null,
-        insuranceInfo: insuranceInfo || null,
       },
     });
 

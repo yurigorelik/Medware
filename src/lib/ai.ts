@@ -26,7 +26,102 @@ export interface AiResponse {
   outputTokens: number;
 }
 
-export function buildSystemPrompt(config: PortalConfig): string {
+interface PatientMedicalSummary {
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  medicalHistory?: string | null;
+  currentMedications?: string | null;
+  allergies?: string | null;
+  pastProcedures?: string | null;
+  familyHistory?: string | null;
+  socialHistory?: string | null;
+}
+
+function formatCodeItemList(
+  jsonStr: string | null | undefined,
+  displayField: "description" | "name" = "description"
+): string {
+  if (!jsonStr) return "None reported";
+  try {
+    const items = JSON.parse(jsonStr);
+    if (Array.isArray(items) && items.length > 0) {
+      return items
+        .map(
+          (item: { code: string; description?: string; name?: string }) =>
+            `${item[displayField] || item.description || item.name} (${item.code})`
+        )
+        .join(", ");
+    }
+  } catch {
+    // Legacy text format
+    if (jsonStr.trim()) return jsonStr;
+  }
+  return "None reported";
+}
+
+function formatSocialHistory(jsonStr: string | null | undefined): string {
+  if (!jsonStr) return "None reported";
+  try {
+    const data = JSON.parse(jsonStr);
+    if (typeof data === "object" && !Array.isArray(data)) {
+      const parts: string[] = [];
+      if (data.smoking) {
+        let s = `Smoking: ${data.smoking}`;
+        if (data.smokingDetails) s += ` (${data.smokingDetails})`;
+        parts.push(s);
+      }
+      if (data.alcohol) {
+        let s = `Alcohol: ${data.alcohol}`;
+        if (data.alcoholDetails) s += ` (${data.alcoholDetails})`;
+        parts.push(s);
+      }
+      if (data.drugs) {
+        let s = `Drug use: ${data.drugs}`;
+        if (data.drugDetails) s += ` (${data.drugDetails})`;
+        parts.push(s);
+      }
+      if (parts.length > 0) return parts.join("; ");
+    }
+  } catch {
+    if (jsonStr.trim()) return jsonStr;
+  }
+  return "None reported";
+}
+
+export function buildPatientMedicalSummary(
+  profile: PatientMedicalSummary
+): string {
+  const sections: string[] = [];
+
+  if (profile.dateOfBirth) {
+    sections.push(`- Date of Birth: ${profile.dateOfBirth}`);
+  }
+  if (profile.gender) {
+    sections.push(`- Gender: ${profile.gender}`);
+  }
+
+  sections.push(
+    `- Medical History (Diagnoses): ${formatCodeItemList(profile.medicalHistory, "description")}`
+  );
+  sections.push(
+    `- Current Medications: ${formatCodeItemList(profile.currentMedications, "name")}`
+  );
+  sections.push(`- Allergies: ${profile.allergies?.trim() || "None reported"}`);
+  sections.push(
+    `- Past Procedures/Surgeries: ${formatCodeItemList(profile.pastProcedures, "description")}`
+  );
+  sections.push(
+    `- Family History: ${formatCodeItemList(profile.familyHistory, "description")}`
+  );
+  sections.push(`- Social History: ${formatSocialHistory(profile.socialHistory)}`);
+
+  return sections.join("\n");
+}
+
+export function buildSystemPrompt(
+  config: PortalConfig,
+  patientSummary?: string
+): string {
   let prompt = `You are a medical AI assistant operating within Dr. ${config.doctorName}'s consultation portal, specializing in ${config.medicalField}.
 
 ## Your Role
@@ -46,6 +141,12 @@ You are conducting a medical second opinion consultation on behalf of Dr. ${conf
 - Encourage patients to seek emergency care if symptoms suggest urgent conditions
 - Be clear that this is a second opinion consultation, not a replacement for in-person care
 - Maintain a professional yet compassionate tone throughout`;
+
+  if (patientSummary) {
+    prompt += `\n\n## Patient Medical Profile Summary
+The following medical information was provided by the patient in their profile. Use this as context for the consultation - you already have this information and do not need to re-ask about it, but you may ask for clarification or additional details as needed:
+${patientSummary}`;
+  }
 
   if (config.instructions) {
     prompt += `\n\n## Doctor's Specific Instructions\n${config.instructions}`;

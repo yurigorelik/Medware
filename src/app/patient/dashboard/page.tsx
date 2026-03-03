@@ -3,6 +3,11 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AutocompleteList, { CodeItem } from "@/components/AutocompleteList";
+import SocialHistoryChecklist, {
+  SocialHistoryData,
+  defaultSocialHistory,
+} from "@/components/SocialHistoryChecklist";
 
 interface Consultation {
   id: string;
@@ -27,16 +32,36 @@ interface PatientProfile {
   id: string;
   dateOfBirth: string | null;
   gender: string | null;
-  phone: string | null;
-  address: string | null;
-  emergencyContact: string | null;
   medicalHistory: string | null;
   currentMedications: string | null;
   allergies: string | null;
   pastProcedures: string | null;
   familyHistory: string | null;
   socialHistory: string | null;
-  insuranceInfo: string | null;
+}
+
+function parseJsonArray(val: string | null): CodeItem[] {
+  if (!val) return [];
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // Not JSON - ignore legacy text data
+  }
+  return [];
+}
+
+function parseSocialHistory(val: string | null): SocialHistoryData {
+  if (!val) return { ...defaultSocialHistory };
+  try {
+    const parsed = JSON.parse(val);
+    if (typeof parsed === "object" && !Array.isArray(parsed)) {
+      return { ...defaultSocialHistory, ...parsed };
+    }
+  } catch {
+    // Not JSON - ignore legacy text data
+  }
+  return { ...defaultSocialHistory };
 }
 
 export default function PatientDashboard() {
@@ -48,20 +73,18 @@ export default function PatientDashboard() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
 
-  const [profileForm, setProfileForm] = useState({
-    dateOfBirth: "",
-    gender: "",
-    phone: "",
-    address: "",
-    emergencyContact: "",
-    medicalHistory: "",
-    currentMedications: "",
-    allergies: "",
-    pastProcedures: "",
-    familyHistory: "",
-    socialHistory: "",
-    insuranceInfo: "",
-  });
+  // Simple fields
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
+
+  // Structured fields stored as JSON
+  const [medicalHistory, setMedicalHistory] = useState<CodeItem[]>([]);
+  const [currentMedications, setCurrentMedications] = useState<CodeItem[]>([]);
+  const [allergies, setAllergies] = useState("");
+  const [pastProcedures, setPastProcedures] = useState<CodeItem[]>([]);
+  const [familyHistory, setFamilyHistory] = useState<CodeItem[]>([]);
+  const [socialHistory, setSocialHistory] =
+    useState<SocialHistoryData>(defaultSocialHistory);
 
   useEffect(() => {
     async function load() {
@@ -80,20 +103,16 @@ export default function PatientDashboard() {
           const profileData = await profileRes.json();
           if (profileData) {
             setProfile(profileData);
-            setProfileForm({
-              dateOfBirth: profileData.dateOfBirth || "",
-              gender: profileData.gender || "",
-              phone: profileData.phone || "",
-              address: profileData.address || "",
-              emergencyContact: profileData.emergencyContact || "",
-              medicalHistory: profileData.medicalHistory || "",
-              currentMedications: profileData.currentMedications || "",
-              allergies: profileData.allergies || "",
-              pastProcedures: profileData.pastProcedures || "",
-              familyHistory: profileData.familyHistory || "",
-              socialHistory: profileData.socialHistory || "",
-              insuranceInfo: profileData.insuranceInfo || "",
-            });
+            setDateOfBirth(profileData.dateOfBirth || "");
+            setGender(profileData.gender || "");
+            setMedicalHistory(parseJsonArray(profileData.medicalHistory));
+            setCurrentMedications(
+              parseJsonArray(profileData.currentMedications)
+            );
+            setAllergies(profileData.allergies || "");
+            setPastProcedures(parseJsonArray(profileData.pastProcedures));
+            setFamilyHistory(parseJsonArray(profileData.familyHistory));
+            setSocialHistory(parseSocialHistory(profileData.socialHistory));
           }
         }
       } catch (error) {
@@ -115,7 +134,16 @@ export default function PatientDashboard() {
       const res = await fetch("/api/patient-profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileForm),
+        body: JSON.stringify({
+          dateOfBirth,
+          gender,
+          medicalHistory: JSON.stringify(medicalHistory),
+          currentMedications: JSON.stringify(currentMedications),
+          allergies,
+          pastProcedures: JSON.stringify(pastProcedures),
+          familyHistory: JSON.stringify(familyHistory),
+          socialHistory: JSON.stringify(socialHistory),
+        }),
       });
 
       if (res.ok) {
@@ -131,12 +159,6 @@ export default function PatientDashboard() {
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleProfileChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) {
-    setProfileForm({ ...profileForm, [e.target.name]: e.target.value });
   }
 
   if (loading) {
@@ -251,18 +273,16 @@ export default function PatientDashboard() {
                   <label className="label">Date of Birth</label>
                   <input
                     type="date"
-                    name="dateOfBirth"
-                    value={profileForm.dateOfBirth}
-                    onChange={handleProfileChange}
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
                     className="input-field"
                   />
                 </div>
                 <div>
                   <label className="label">Gender</label>
                   <select
-                    name="gender"
-                    value={profileForm.gender}
-                    onChange={handleProfileChange}
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
                     className="input-field"
                   >
                     <option value="">Select...</option>
@@ -272,50 +292,6 @@ export default function PatientDashboard() {
                     <option value="Prefer not to say">Prefer not to say</option>
                   </select>
                 </div>
-                <div>
-                  <label className="label">Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={profileForm.phone}
-                    onChange={handleProfileChange}
-                    className="input-field"
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-                <div>
-                  <label className="label">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={profileForm.address}
-                    onChange={handleProfileChange}
-                    className="input-field"
-                    placeholder="City, State"
-                  />
-                </div>
-                <div>
-                  <label className="label">Emergency Contact</label>
-                  <input
-                    type="text"
-                    name="emergencyContact"
-                    value={profileForm.emergencyContact}
-                    onChange={handleProfileChange}
-                    className="input-field"
-                    placeholder="Name - Phone"
-                  />
-                </div>
-                <div>
-                  <label className="label">Insurance Info</label>
-                  <input
-                    type="text"
-                    name="insuranceInfo"
-                    value={profileForm.insuranceInfo}
-                    onChange={handleProfileChange}
-                    className="input-field"
-                    placeholder="Provider - Plan"
-                  />
-                </div>
               </div>
             </div>
 
@@ -323,72 +299,59 @@ export default function PatientDashboard() {
             <div>
               <h3 className="font-medium text-gray-900 mb-3 border-b pb-2">Medical History</h3>
               <div className="space-y-4">
-                <div>
-                  <label className="label">Medical History</label>
-                  <textarea
-                    name="medicalHistory"
-                    value={profileForm.medicalHistory}
-                    onChange={handleProfileChange}
-                    className="textarea-field"
-                    rows={3}
-                    placeholder="List any past or current medical conditions (e.g., diabetes, hypertension, asthma...)"
-                  />
-                </div>
-                <div>
-                  <label className="label">Current Medications</label>
-                  <textarea
-                    name="currentMedications"
-                    value={profileForm.currentMedications}
-                    onChange={handleProfileChange}
-                    className="textarea-field"
-                    rows={3}
-                    placeholder="List medications and dosages (e.g., Metformin 500mg twice daily...)"
-                  />
-                </div>
+                <AutocompleteList
+                  label="Medical History (Diagnoses)"
+                  searchEndpoint="/api/search/icd10-diagnoses"
+                  items={medicalHistory}
+                  onItemsChange={setMedicalHistory}
+                  placeholder="Search ICD-10 diagnoses (e.g., diabetes, hypertension...)"
+                  displayField="description"
+                />
+
+                <AutocompleteList
+                  label="Current Medications"
+                  searchEndpoint="/api/search/atc4-medications"
+                  items={currentMedications}
+                  onItemsChange={setCurrentMedications}
+                  placeholder="Search medications by generic name (e.g., metformin, amlodipine...)"
+                  helperText="Please use generic medication names when possible"
+                  displayField="name"
+                />
+
                 <div>
                   <label className="label">Allergies</label>
                   <textarea
-                    name="allergies"
-                    value={profileForm.allergies}
-                    onChange={handleProfileChange}
+                    value={allergies}
+                    onChange={(e) => setAllergies(e.target.value)}
                     className="textarea-field"
                     rows={2}
                     placeholder="List any allergies (medications, food, environmental...)"
                   />
                 </div>
-                <div>
-                  <label className="label">Past Procedures / Surgeries</label>
-                  <textarea
-                    name="pastProcedures"
-                    value={profileForm.pastProcedures}
-                    onChange={handleProfileChange}
-                    className="textarea-field"
-                    rows={2}
-                    placeholder="List any past surgeries or procedures with dates..."
-                  />
-                </div>
-                <div>
-                  <label className="label">Family History</label>
-                  <textarea
-                    name="familyHistory"
-                    value={profileForm.familyHistory}
-                    onChange={handleProfileChange}
-                    className="textarea-field"
-                    rows={2}
-                    placeholder="Relevant family medical history (e.g., Father - heart disease, Mother - diabetes...)"
-                  />
-                </div>
-                <div>
-                  <label className="label">Social History</label>
-                  <textarea
-                    name="socialHistory"
-                    value={profileForm.socialHistory}
-                    onChange={handleProfileChange}
-                    className="textarea-field"
-                    rows={2}
-                    placeholder="Smoking, alcohol use, exercise, occupation, etc."
-                  />
-                </div>
+
+                <AutocompleteList
+                  label="Past Procedures / Surgeries"
+                  searchEndpoint="/api/search/icd10-procedures"
+                  items={pastProcedures}
+                  onItemsChange={setPastProcedures}
+                  placeholder="Search procedures (e.g., appendectomy, knee replacement...)"
+                  displayField="description"
+                />
+
+                <AutocompleteList
+                  label="Family History"
+                  searchEndpoint="/api/search/icd10-diagnoses"
+                  items={familyHistory}
+                  onItemsChange={setFamilyHistory}
+                  placeholder="Search conditions in family (e.g., heart disease, diabetes...)"
+                  helperText="Add medical conditions that run in your family"
+                  displayField="description"
+                />
+
+                <SocialHistoryChecklist
+                  value={socialHistory}
+                  onChange={setSocialHistory}
+                />
               </div>
             </div>
 
