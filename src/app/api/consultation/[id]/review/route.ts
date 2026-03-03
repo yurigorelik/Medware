@@ -54,6 +54,7 @@ export async function POST(
     const body = await request.json();
     const {
       approved,
+      followUpRequested,
       editedSummary,
       editedDiagnosis,
       editedWorkup,
@@ -64,6 +65,7 @@ export async function POST(
       data: {
         summaryId: consultation.summary.id,
         approved: approved ?? true,
+        followUpRequested: followUpRequested ?? false,
         editedSummary: editedSummary || null,
         editedDiagnosis: editedDiagnosis || null,
         editedWorkup: editedWorkup || null,

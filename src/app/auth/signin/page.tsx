@@ -30,7 +30,21 @@ function SignInForm() {
       if (result?.error) {
         setError(result.error);
       } else {
-        router.push(callbackUrl || "/");
+        // Fetch session to get user role and redirect to appropriate dashboard
+        let redirectUrl = callbackUrl;
+        if (!redirectUrl) {
+          try {
+            const sessionRes = await fetch("/api/auth/session");
+            const sessionData = await sessionRes.json();
+            const role = sessionData?.user?.role;
+            if (role === "DOCTOR") redirectUrl = "/doctor/dashboard";
+            else if (role === "PATIENT") redirectUrl = "/patient/dashboard";
+            else if (role === "ADMIN") redirectUrl = "/admin/dashboard";
+          } catch {
+            // Fallback to home if session fetch fails
+          }
+        }
+        router.push(redirectUrl || "/");
         router.refresh();
       }
     } catch {

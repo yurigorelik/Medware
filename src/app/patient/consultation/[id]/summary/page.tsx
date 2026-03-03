@@ -22,6 +22,7 @@ interface SummaryData {
     review: {
       id: string;
       approved: boolean;
+      followUpRequested: boolean;
       editedSummary: string | null;
       editedDiagnosis: string | null;
       editedWorkup: string | null;
@@ -36,6 +37,8 @@ export default function PatientSummaryPage() {
   const router = useRouter();
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [startingFollowUp, setStartingFollowUp] = useState(false);
+  const [followUpError, setFollowUpError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -53,6 +56,30 @@ export default function PatientSummaryPage() {
 
     load();
   }, [params.id]);
+
+  async function handleStartFollowUp() {
+    setStartingFollowUp(true);
+    setFollowUpError("");
+
+    try {
+      const res = await fetch(`/api/consultation/${params.id}/follow-up`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        setFollowUpError(errData.error || "Failed to start follow-up");
+        return;
+      }
+
+      const followUp = await res.json();
+      router.push(`/patient/consultation/${followUp.id}`);
+    } catch {
+      setFollowUpError("Failed to start follow-up. Please try again.");
+    } finally {
+      setStartingFollowUp(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -78,6 +105,7 @@ export default function PatientSummaryPage() {
 
   const isReviewed = data.summary.review;
   const isCompleted = data.consultation.status === "COMPLETED";
+  const followUpRequested = isReviewed?.followUpRequested ?? false;
 
   // Use doctor-edited versions if available, otherwise use AI originals
   const displaySummary =
@@ -130,6 +158,31 @@ export default function PatientSummaryPage() {
             {data.consultation.doctorName} will review and finalize it. You will
             be notified when the final review is available.
           </div>
+        </div>
+      )}
+
+      {/* Follow-Up Banner */}
+      {isCompleted && followUpRequested && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <div className="font-medium text-amber-800">
+            Follow-Up Requested
+          </div>
+          <div className="text-sm text-amber-700 mt-1 mb-3">
+            Dr. {data.consultation.doctorName} has requested that you return for
+            a follow-up consultation. The AI will ask about changes in your
+            symptoms, test results, and response to medications based on this
+            consultation.
+          </div>
+          {followUpError && (
+            <div className="text-sm text-red-600 mb-2">{followUpError}</div>
+          )}
+          <button
+            onClick={handleStartFollowUp}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+            disabled={startingFollowUp}
+          >
+            {startingFollowUp ? "Starting Follow-Up..." : "Start Follow-Up Consultation"}
+          </button>
         </div>
       )}
 
