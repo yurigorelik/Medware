@@ -28,6 +28,7 @@ interface SummaryData {
     review: {
       id: string;
       approved: boolean;
+      followUpRequested: boolean;
       editedSummary: string | null;
       editedDiagnosis: string | null;
       editedWorkup: string | null;
@@ -83,7 +84,7 @@ export default function DoctorConsultationDetailPage() {
     load();
   }, [params.id]);
 
-  async function handleApprove(approve: boolean) {
+  async function handleApprove(approve: boolean, followUp: boolean = false) {
     setError("");
     setSubmitting(true);
 
@@ -93,6 +94,7 @@ export default function DoctorConsultationDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           approved: approve,
+          followUpRequested: followUp,
           editedSummary:
             editedSummary !== summaryData?.summary.summary
               ? editedSummary
@@ -216,6 +218,8 @@ export default function DoctorConsultationDetailPage() {
                   {summaryData.summary.review!.approved
                     ? "approved"
                     : "reviewed with modifications"}
+                  {summaryData.summary.review!.followUpRequested &&
+                    " — Follow-up requested"}
                 </div>
                 <div className="text-sm text-green-600 mt-1">
                   Reviewed on{" "}
@@ -320,13 +324,21 @@ export default function DoctorConsultationDetailPage() {
                 />
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => handleApprove(true)}
+                  onClick={() => handleApprove(true, false)}
                   className="btn-success"
                   disabled={submitting}
                 >
                   {submitting ? "Submitting..." : "Approve & Send to Patient"}
+                </button>
+                <button
+                  onClick={() => handleApprove(true, true)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
+                  disabled={submitting}
+                  title="Approve and ask the patient to return for a follow-up consultation"
+                >
+                  {submitting ? "Submitting..." : "Approve & Request Follow-Up"}
                 </button>
                 <button
                   onClick={() => setTab("chat")}

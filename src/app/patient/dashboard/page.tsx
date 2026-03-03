@@ -23,8 +23,9 @@ interface Consultation {
   };
   summary: {
     id: string;
-    review: { id: string; approved: boolean } | null;
+    review: { id: string; approved: boolean; followUpRequested: boolean } | null;
   } | null;
+  parentConsultationId: string | null;
   _count: { messages: number };
 }
 
@@ -176,9 +177,15 @@ export default function PatientDashboard() {
   const completed = consultations.filter((c) => c.status === "COMPLETED");
 
   function getStatusLabel(c: Consultation) {
+    if (c.status === "COMPLETED" && c.summary?.review?.followUpRequested) {
+      return { text: "Follow-Up Requested", className: "badge-pending" };
+    }
     switch (c.status) {
       case "ACTIVE":
-        return { text: "In Progress", className: "badge-active" };
+        return {
+          text: c.parentConsultationId ? "Follow-Up In Progress" : "In Progress",
+          className: "badge-active",
+        };
       case "SUMMARY_GENERATED":
         return { text: "Awaiting Doctor Review", className: "badge-pending" };
       case "UNDER_REVIEW":

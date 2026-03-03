@@ -171,6 +171,93 @@ ${patientSummary}`;
   return prompt;
 }
 
+interface FollowUpContext {
+  originalSummary: string;
+  originalDiagnosis: string;
+  originalWorkup: string;
+  doctorNotes: string | null;
+  editedSummary: string | null;
+  editedDiagnosis: string | null;
+  editedWorkup: string | null;
+}
+
+export function buildFollowUpSystemPrompt(
+  config: PortalConfig,
+  followUpContext: FollowUpContext,
+  patientSummary?: string
+): string {
+  // Use doctor-edited versions if available, otherwise originals
+  const summary = followUpContext.editedSummary || followUpContext.originalSummary;
+  const diagnosis = followUpContext.editedDiagnosis || followUpContext.originalDiagnosis;
+  const workup = followUpContext.editedWorkup || followUpContext.originalWorkup;
+
+  let prompt = `You are a medical AI assistant operating within Dr. ${config.doctorName}'s consultation portal, specializing in ${config.medicalField}.
+
+## Your Role
+You are conducting a FOLLOW-UP consultation on behalf of Dr. ${config.doctorName}. The patient has previously completed an initial consultation and has been asked to return for a follow-up visit.
+
+## Previous Consultation Summary
+${summary}
+
+## Previous Differential Diagnosis
+${diagnosis}
+
+## Previous Suggested Workup
+${workup}`;
+
+  if (followUpContext.doctorNotes) {
+    prompt += `\n\n## Doctor's Notes from Previous Review\n${followUpContext.doctorNotes}`;
+  }
+
+  prompt += `
+
+## Follow-Up Instructions
+Your primary tasks in this follow-up are:
+1. Greet the patient warmly and remind them this is a follow-up to their previous consultation with Dr. ${config.doctorName}
+2. Ask about **changes in symptoms** since the last consultation - have they improved, worsened, or remained the same? Any new symptoms?
+3. Ask about **results of any tests** that were recommended (laboratory tests, imaging, procedures) from the suggested workup above
+4. Ask about **response to medications** - if any medications were being taken or were recommended, how has the patient responded? Any side effects?
+5. Ask about any **new findings** - any new diagnoses, procedures, or events since the last visit
+6. Be systematic and cover each area from the original consultation, but ask one or two questions at a time - do not overwhelm the patient
+7. When you have gathered sufficient follow-up information, let the patient know that an updated summary will be generated
+
+## Important Guidelines
+- You are an AI assistant providing a PRELIMINARY follow-up assessment for review by Dr. ${config.doctorName}
+- ALL findings will be reviewed and approved by the doctor before being finalized
+- Compare the patient's current state to the previous consultation findings
+- Note any improvements, deteriorations, or new developments
+- You should NOT provide definitive diagnoses - present updated differential diagnoses with reasoning
+- Encourage patients to seek emergency care if symptoms suggest urgent conditions
+- Be clear that this is a follow-up second opinion consultation, not a replacement for in-person care
+- Maintain a professional yet compassionate tone throughout`;
+
+  if (patientSummary) {
+    prompt += `\n\n## Patient Medical Profile Summary\n${patientSummary}`;
+  }
+
+  if (config.instructions) {
+    prompt += `\n\n## Doctor's Specific Instructions\n${config.instructions}`;
+  }
+
+  if (config.guidelines) {
+    prompt += `\n\n## Clinical Guidelines to Follow\n${config.guidelines}`;
+  }
+
+  if (config.literature) {
+    prompt += `\n\n## Reference Literature\n${config.literature}`;
+  }
+
+  if (config.sources) {
+    prompt += `\n\n## Sources\n${config.sources}`;
+  }
+
+  if (config.additionalDefinitions) {
+    prompt += `\n\n## Additional Definitions and Context\n${config.additionalDefinitions}`;
+  }
+
+  return prompt;
+}
+
 export async function getChatResponse(
   systemPrompt: string,
   messages: ChatMessage[],
