@@ -37,7 +37,7 @@ You are conducting a medical second opinion consultation on behalf of Dr. ${conf
 4. Accept and review any medical documents or images the patient shares
 5. Be empathetic, professional, and thorough
 6. Ask one or two questions at a time - do not overwhelm the patient
-7. When you have gathered sufficient information, let the patient know they can request a case summary
+7. When you have gathered sufficient information, let the patient know that a case summary will be generated automatically
 
 ## Important Guidelines
 - You are an AI assistant providing a PRELIMINARY assessment for review by Dr. ${config.doctorName}
@@ -174,8 +174,15 @@ ${conversationText}`;
     ? (textBlock as Anthropic.TextBlock).text
     : "";
 
+  // Strip markdown code blocks if present (e.g. ```json ... ```)
+  let cleanedText = responseText.trim();
+  const codeBlockMatch = cleanedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  if (codeBlockMatch) {
+    cleanedText = codeBlockMatch[1].trim();
+  }
+
   try {
-    const parsed = JSON.parse(responseText);
+    const parsed = JSON.parse(cleanedText);
     return {
       summary: parsed.summary || "Unable to generate summary",
       differentialDiagnosis:
@@ -186,6 +193,25 @@ ${conversationText}`;
       outputTokens: response.usage.output_tokens,
     };
   } catch {
+    // Try to extract JSON object from the response text
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          summary: parsed.summary || "Unable to generate summary",
+          differentialDiagnosis:
+            parsed.differentialDiagnosis || "Unable to generate differential diagnosis",
+          suggestedWorkup:
+            parsed.suggestedWorkup || "Unable to generate suggested workup",
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        };
+      } catch {
+        // Fall through to fallback
+      }
+    }
+
     return {
       summary: responseText,
       differentialDiagnosis: "Error parsing AI response. Please review the summary above.",
