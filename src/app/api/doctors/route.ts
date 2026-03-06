@@ -27,11 +27,27 @@ export async function GET() {
             },
           },
         },
+        ratings: {
+          select: { rating: true },
+        },
       },
     });
 
-    // Sort by consultation count descending (most active first)
-    const sorted = doctors.sort((a, b) => {
+    // Add average rating to each doctor and sort by consultation count
+    const withRatings = doctors.map((doc) => {
+      const ratings = doc.ratings || [];
+      const avgRating = ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+      const { ratings: _ratings, ...rest } = doc;
+      return {
+        ...rest,
+        averageRating: Math.round(avgRating * 10) / 10,
+        ratingCount: ratings.length,
+      };
+    });
+
+    const sorted = withRatings.sort((a, b) => {
       const countA = a.portal?._count?.consultations ?? 0;
       const countB = b.portal?._count?.consultations ?? 0;
       return countB - countA;

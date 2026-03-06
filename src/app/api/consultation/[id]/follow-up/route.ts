@@ -119,7 +119,8 @@ export async function POST(
         editedDiagnosis: review.editedDiagnosis,
         editedWorkup: review.editedWorkup,
       },
-      patientSummary
+      patientSummary,
+      patientProfile?.preferredLanguage
     );
 
     // Store the system prompt

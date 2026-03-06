@@ -33,6 +33,7 @@ interface PatientProfile {
   id: string;
   dateOfBirth: string | null;
   gender: string | null;
+  preferredLanguage: string | null;
   medicalHistory: string | null;
   currentMedications: string | null;
   allergies: string | null;
@@ -77,6 +78,7 @@ export default function PatientDashboard() {
   // Simple fields
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
+  const [preferredLanguage, setPreferredLanguage] = useState("");
 
   // Structured fields stored as JSON
   const [medicalHistory, setMedicalHistory] = useState<CodeItem[]>([]);
@@ -106,6 +108,7 @@ export default function PatientDashboard() {
             setProfile(profileData);
             setDateOfBirth(profileData.dateOfBirth || "");
             setGender(profileData.gender || "");
+            setPreferredLanguage(profileData.preferredLanguage || "");
             setMedicalHistory(parseJsonArray(profileData.medicalHistory));
             setCurrentMedications(
               parseJsonArray(profileData.currentMedications)
@@ -138,6 +141,7 @@ export default function PatientDashboard() {
         body: JSON.stringify({
           dateOfBirth,
           gender,
+          preferredLanguage,
           medicalHistory: JSON.stringify(medicalHistory),
           currentMedications: JSON.stringify(currentMedications),
           allergies,
@@ -297,6 +301,36 @@ export default function PatientDashboard() {
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                     <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Preferred Language</label>
+                  <select
+                    value={preferredLanguage}
+                    onChange={(e) => setPreferredLanguage(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">Select...</option>
+                    <option value="English">English</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="French">French</option>
+                    <option value="German">German</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Portuguese">Portuguese</option>
+                    <option value="Russian">Russian</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Korean">Korean</option>
+                    <option value="Arabic">Arabic</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Hebrew">Hebrew</option>
+                    <option value="Turkish">Turkish</option>
+                    <option value="Dutch">Dutch</option>
+                    <option value="Polish">Polish</option>
+                    <option value="Swedish">Swedish</option>
+                    <option value="Vietnamese">Vietnamese</option>
+                    <option value="Thai">Thai</option>
+                    <option value="Ukrainian">Ukrainian</option>
                   </select>
                 </div>
               </div>
