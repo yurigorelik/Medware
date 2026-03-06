@@ -70,7 +70,8 @@ export async function POST(request: Request) {
         additionalDefinitions: portal.additionalDefinitions,
         welcomeMessage: portal.welcomeMessage,
       },
-      patientSummary
+      patientSummary,
+      patientProfile?.preferredLanguage
     );
 
     // Store the system prompt as a system message

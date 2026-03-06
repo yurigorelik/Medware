@@ -44,6 +44,8 @@ model User {
   doctorProfile          DoctorProfile?
   consultations          Consultation[]
   patientProfile         PatientProfile?
+  doctorRatings          DoctorRating[]
+  secondOpinions         SecondOpinion[]
 }
 
 model PatientProfile {
@@ -55,6 +57,7 @@ model PatientProfile {
   phone            String?
   address          String?
   emergencyContact String?
+  preferredLanguage String?
   medicalHistory   String?  @db.Text
   currentMedications String? @db.Text
   allergies        String?  @db.Text
@@ -67,14 +70,31 @@ model PatientProfile {
 }
 
 model DoctorProfile {
-  id            String  @id @default(cuid())
-  userId        String  @unique
-  user          User    @relation(fields: [userId], references: [id])
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id])
   specialty     String
   bio           String?
   licenseNumber String?
   photoUrl      String?
   portal        Portal?
+  ratings       DoctorRating[]
+}
+
+model DoctorRating {
+  id              String        @id @default(cuid())
+  doctorProfileId String
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id])
+  patientId       String
+  patient         User          @relation(fields: [patientId], references: [id])
+  rating          Int
+  comment         String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([doctorProfileId, patientId])
+  @@index([doctorProfileId])
+  @@index([patientId])
 }
 
 model Portal {
@@ -165,5 +185,36 @@ model DoctorReview {
   editedWorkup      String?     @db.Text
   doctorNotes       String?     @db.Text
   reviewedAt        DateTime    @default(now())
+}
+
+model SecondOpinion {
+  id            String                @id @default(cuid())
+  doctorId      String
+  doctor        User                  @relation(fields: [doctorId], references: [id])
+  patientName   String
+  status        SecondOpinionStatus   @default(ACTIVE)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  messages      SecondOpinionMessage[]
+
+  @@index([doctorId])
+}
+
+enum SecondOpinionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+model SecondOpinionMessage {
+  id              String        @id @default(cuid())
+  secondOpinionId String
+  secondOpinion   SecondOpinion @relation(fields: [secondOpinionId], references: [id], onDelete: Cascade)
+  role            MessageRole
+  content         String        @db.Text
+  inputTokens     Int           @default(0)
+  outputTokens    Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  @@index([secondOpinionId])
 }
 

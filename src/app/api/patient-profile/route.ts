@@ -37,6 +37,7 @@ export async function PUT(request: Request) {
     const {
       dateOfBirth,
       gender,
+      preferredLanguage,
       medicalHistory,
       currentMedications,
       allergies,
@@ -50,6 +51,7 @@ export async function PUT(request: Request) {
       update: {
         dateOfBirth: dateOfBirth || null,
         gender: gender || null,
+        preferredLanguage: preferredLanguage || null,
         medicalHistory: medicalHistory || null,
         currentMedications: currentMedications || null,
         allergies: allergies || null,
@@ -61,6 +63,7 @@ export async function PUT(request: Request) {
         userId: session.user.id,
         dateOfBirth: dateOfBirth || null,
         gender: gender || null,
+        preferredLanguage: preferredLanguage || null,
         medicalHistory: medicalHistory || null,
         currentMedications: currentMedications || null,
         allergies: allergies || null,

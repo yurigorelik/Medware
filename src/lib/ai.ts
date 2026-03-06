@@ -29,6 +29,7 @@ export interface AiResponse {
 interface PatientMedicalSummary {
   dateOfBirth?: string | null;
   gender?: string | null;
+  preferredLanguage?: string | null;
   medicalHistory?: string | null;
   currentMedications?: string | null;
   allergies?: string | null;
@@ -99,6 +100,9 @@ export function buildPatientMedicalSummary(
   if (profile.gender) {
     sections.push(`- Gender: ${profile.gender}`);
   }
+  if (profile.preferredLanguage) {
+    sections.push(`- Preferred Language: ${profile.preferredLanguage}`);
+  }
 
   sections.push(
     `- Medical History (Diagnoses): ${formatCodeItemList(profile.medicalHistory, "description")}`
@@ -120,7 +124,8 @@ export function buildPatientMedicalSummary(
 
 export function buildSystemPrompt(
   config: PortalConfig,
-  patientSummary?: string
+  patientSummary?: string,
+  preferredLanguage?: string | null
 ): string {
   let prompt = `You are a medical AI assistant operating within Dr. ${config.doctorName}'s consultation portal, specializing in ${config.medicalField}.
 
@@ -168,6 +173,10 @@ ${patientSummary}`;
     prompt += `\n\n## Additional Definitions and Context\n${config.additionalDefinitions}`;
   }
 
+  if (preferredLanguage && preferredLanguage !== "English") {
+    prompt += `\n\n## Language Preference\nThe patient's preferred language is **${preferredLanguage}**. You MUST communicate predominantly in ${preferredLanguage}. Use ${preferredLanguage} for all your responses, questions, and explanations. You may use English medical terminology where appropriate but always provide the ${preferredLanguage} explanation alongside it. Greet the patient in ${preferredLanguage}.`;
+  }
+
   return prompt;
 }
 
@@ -184,7 +193,8 @@ interface FollowUpContext {
 export function buildFollowUpSystemPrompt(
   config: PortalConfig,
   followUpContext: FollowUpContext,
-  patientSummary?: string
+  patientSummary?: string,
+  preferredLanguage?: string | null
 ): string {
   // Use doctor-edited versions if available, otherwise originals
   const summary = followUpContext.editedSummary || followUpContext.originalSummary;
@@ -253,6 +263,10 @@ Your primary tasks in this follow-up are:
 
   if (config.additionalDefinitions) {
     prompt += `\n\n## Additional Definitions and Context\n${config.additionalDefinitions}`;
+  }
+
+  if (preferredLanguage && preferredLanguage !== "English") {
+    prompt += `\n\n## Language Preference\nThe patient's preferred language is **${preferredLanguage}**. You MUST communicate predominantly in ${preferredLanguage}. Use ${preferredLanguage} for all your responses, questions, and explanations. You may use English medical terminology where appropriate but always provide the ${preferredLanguage} explanation alongside it. Greet the patient in ${preferredLanguage}.`;
   }
 
   return prompt;
@@ -408,4 +422,60 @@ ${conversationText}`;
       outputTokens: response.usage.output_tokens,
     };
   }
+}
+
+interface SecondOpinionConfig {
+  doctorName: string;
+  medicalField: string;
+  guidelines: string;
+  literature: string;
+  sources: string;
+  additionalDefinitions: string;
+}
+
+export function buildSecondOpinionSystemPrompt(
+  config: SecondOpinionConfig
+): string {
+  let prompt = `You are an expert medical AI consultant providing a **second opinion** to Dr. ${config.doctorName}, who specializes in ${config.medicalField}. You are having a doctor-to-doctor consultation.
+
+## Your Role
+You are acting as a senior consulting physician. Dr. ${config.doctorName} will present a patient case to you, including findings, test results, imaging, and their clinical reasoning. Your job is to:
+
+1. Listen carefully to the case presentation
+2. Ask clarifying questions about the patient's history, findings, test results, imaging, physical exam, or any other relevant clinical details you need
+3. Ask focused, relevant follow-up questions one or two at a time — do not overwhelm the doctor
+4. Once you have sufficient information, provide a comprehensive second opinion including:
+   - **Differential Diagnosis**: A ranked list of possible diagnoses with probabilities (as percentages) and reasoning for each
+   - **Assessment**: Your clinical assessment of the case, highlighting areas of agreement or disagreement with the presenting doctor's impression
+   - **Recommended Next Steps**: Further workup, tests, imaging, or consultations you would recommend
+   - **Prognosis**: Expected outcomes for the most likely diagnoses
+   - **Treatment Options**: Evidence-based treatment recommendations for the top differential diagnoses
+
+## Important Guidelines
+- You are speaking doctor-to-doctor — use appropriate medical terminology and clinical reasoning
+- Do NOT focus on a single primary complaint — consider the full clinical picture presented
+- Provide probability estimates for each differential diagnosis (must sum to approximately 100%)
+- Reference relevant clinical guidelines, scoring systems, or diagnostic criteria where applicable
+- Be thorough but concise — focus on clinically actionable information
+- If the case presentation is incomplete, ask for specific missing information before providing your opinion
+- Flag any red flags or urgent findings that require immediate attention
+- Consider both common and less common diagnoses based on the clinical presentation`;
+
+  if (config.guidelines) {
+    prompt += `\n\n## Clinical Guidelines the Doctor Follows\n${config.guidelines}`;
+  }
+
+  if (config.literature) {
+    prompt += `\n\n## Reference Literature\n${config.literature}`;
+  }
+
+  if (config.sources) {
+    prompt += `\n\n## Preferred Sources\n${config.sources}`;
+  }
+
+  if (config.additionalDefinitions) {
+    prompt += `\n\n## Additional Context\n${config.additionalDefinitions}`;
+  }
+
+  return prompt;
 }
