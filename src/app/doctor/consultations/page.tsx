@@ -18,6 +18,7 @@ export default function DoctorConsultationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
   const [messageModal, setMessageModal] = useState<Consultation | null>(null);
   const [messageText, setMessageText] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -41,11 +42,8 @@ export default function DoctorConsultationsPage() {
     load();
   }, []);
 
-  async function handleDelete(consultationId: string, patientName: string) {
-    if (!confirm(`Are you sure you want to delete the consultation with ${patientName}? This action cannot be undone.`)) {
-      return;
-    }
-
+  async function handleDelete(consultationId: string) {
+    setConfirmDelete(null);
     setDeleting(consultationId);
     try {
       const res = await fetch(`/api/consultation/${consultationId}/delete`, {
@@ -166,6 +164,32 @@ export default function DoctorConsultationsPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <h3 className="font-semibold text-lg mb-2">Delete Consultation</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete the consultation with <span className="font-medium">{confirmDelete.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="btn-secondary text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete.id)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {["ALL", "ACTIVE", "SUMMARY_GENERATED", "COMPLETED", "CLOSED"].map(
@@ -252,7 +276,7 @@ export default function DoctorConsultationsPage() {
                     : "View"}
                 </Link>
                 <button
-                  onClick={() => handleDelete(c.id, c.patient.name)}
+                  onClick={() => setConfirmDelete({ id: c.id, name: c.patient.name })}
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                   title="Delete consultation"
                   disabled={deleting === c.id}
