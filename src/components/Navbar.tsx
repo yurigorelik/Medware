@@ -59,13 +59,22 @@ export default function Navbar() {
                     Dashboard
                   </Link>
                   {session.user.role === "DOCTOR" && (
-                    <Link
-                      href="/doctor/second-opinion"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      AI Second Opinion
-                    </Link>
+                    <>
+                      <Link
+                        href="/doctor/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Profile Settings
+                      </Link>
+                      <Link
+                        href="/doctor/second-opinion"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        AI Second Opinion
+                      </Link>
+                    </>
                   )}
                   {session.user.role === "ADMIN" && (
                     <Link

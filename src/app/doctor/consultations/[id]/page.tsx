@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Message {
   id: string;
@@ -212,21 +213,29 @@ export default function DoctorConsultationDetailPage() {
           {isReviewed ? (
             /* Already reviewed - show read-only */
             <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="text-green-700 font-medium">
-                  This consultation has been reviewed and{" "}
-                  {summaryData.summary.review!.approved
-                    ? "approved"
-                    : "reviewed with modifications"}
-                  {summaryData.summary.review!.followUpRequested &&
-                    " — Follow-up requested"}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-green-700 font-medium">
+                    This consultation has been reviewed and{" "}
+                    {summaryData.summary.review!.approved
+                      ? "approved"
+                      : "reviewed with modifications"}
+                    {summaryData.summary.review!.followUpRequested &&
+                      " — Follow-up requested"}
+                  </div>
+                  <div className="text-sm text-green-600 mt-1">
+                    Reviewed on{" "}
+                    {new Date(
+                      summaryData.summary.review!.reviewedAt
+                    ).toLocaleDateString()}
+                  </div>
                 </div>
-                <div className="text-sm text-green-600 mt-1">
-                  Reviewed on{" "}
-                  {new Date(
-                    summaryData.summary.review!.reviewedAt
-                  ).toLocaleDateString()}
-                </div>
+                <Link
+                  href={`/doctor/consultations/${params.id}/documents`}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 flex-shrink-0"
+                >
+                  Prepare Documents
+                </Link>
               </div>
 
               <div className="card">
