@@ -424,6 +424,94 @@ ${conversationText}`;
   }
 }
 
+export async function extractMedicationsFromSummary(
+  summaryText: string,
+  diagnosisText: string,
+  workupText: string
+): Promise<{
+  medications: { name: string; suggestedDose?: string; suggestedRoute?: string; suggestedDuration?: string; reason?: string }[];
+  inputTokens: number;
+  outputTokens: number;
+}> {
+  const prompt = `You are a medical AI assistant. Analyze the following case summary, differential diagnosis, and suggested workup. Identify ALL medications that are mentioned or recommended in any section.
+
+For each medication found, extract or suggest:
+- name: The medication name
+- suggestedDose: The dosage if mentioned, or a common starting dose
+- suggestedRoute: The route of administration (e.g., "oral", "IV", "topical", "inhaled")
+- suggestedDuration: The duration if mentioned
+- reason: Brief reason for the medication
+
+Respond with ONLY a valid JSON object (no markdown, no code blocks):
+{
+  "medications": [
+    {
+      "name": "Medication Name",
+      "suggestedDose": "dose if available",
+      "suggestedRoute": "route",
+      "suggestedDuration": "duration if available",
+      "reason": "brief reason"
+    }
+  ]
+}
+
+If no medications are mentioned or recommended, return: {"medications": []}
+
+## Case Summary:
+${summaryText}
+
+## Differential Diagnosis:
+${diagnosisText}
+
+## Suggested Workup:
+${workupText}`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const textBlock = response.content.find((block) => block.type === "text");
+  const responseText = textBlock
+    ? (textBlock as Anthropic.TextBlock).text
+    : "";
+
+  let cleanedText = responseText.trim();
+  const codeBlockMatch = cleanedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  if (codeBlockMatch) {
+    cleanedText = codeBlockMatch[1].trim();
+  }
+
+  try {
+    const parsed = JSON.parse(cleanedText);
+    return {
+      medications: parsed.medications || [],
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    };
+  } catch {
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          medications: parsed.medications || [],
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        };
+      } catch {
+        // Fall through
+      }
+    }
+    return {
+      medications: [],
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    };
+  }
+}
+
 interface SecondOpinionConfig {
   doctorName: string;
   medicalField: string;

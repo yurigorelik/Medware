@@ -144,13 +144,18 @@ export default function DoctorDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome, Dr. {session?.user?.name}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Manage your portal and review patient consultations
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome, Dr. {session?.user?.name}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage your portal and review patient consultations
+          </p>
+        </div>
+        <Link href="/doctor/profile" className="btn-secondary text-sm">
+          Profile Settings
+        </Link>
       </div>
 
       {/* Action Message */}

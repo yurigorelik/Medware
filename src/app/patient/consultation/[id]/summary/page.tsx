@@ -138,14 +138,24 @@ export default function PatientSummaryPage() {
       {/* Status Banner */}
       {isCompleted ? (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-          <div className="font-medium text-green-800">
-            Doctor Reviewed &amp; Approved
-          </div>
-          <div className="text-sm text-green-600 mt-1">
-            Dr. {data.consultation.doctorName} has reviewed your case and
-            approved the following assessment.
-            {isReviewed?.reviewedAt &&
-              ` Reviewed on ${new Date(isReviewed.reviewedAt).toLocaleDateString()}.`}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-green-800">
+                Doctor Reviewed &amp; Approved
+              </div>
+              <div className="text-sm text-green-600 mt-1">
+                Dr. {data.consultation.doctorName} has reviewed your case and
+                approved the following assessment.
+                {isReviewed?.reviewedAt &&
+                  ` Reviewed on ${new Date(isReviewed.reviewedAt).toLocaleDateString()}.`}
+              </div>
+            </div>
+            <Link
+              href={`/patient/consultation/${params.id}/documents`}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 flex-shrink-0 ml-4"
+            >
+              View Documents
+            </Link>
           </div>
         </div>
       ) : (

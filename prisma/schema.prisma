@@ -77,6 +77,9 @@ model DoctorProfile {
   bio           String?
   licenseNumber String?
   photoUrl      String?
+  clinicName    String?
+  stampUrl      String?
+  signatureUrl  String?
   portal        Portal?
   ratings       DoctorRating[]
 }
@@ -130,6 +133,9 @@ model Consultation {
   messages               Message[]
   attachments            Attachment[]
   summary                CaseSummary?
+  summaryLetter          SummaryLetter?
+  prescriptions          Prescription[]
+  documentRequests       DocumentRequest[]
 
   @@index([portalId])
   @@index([patientId])
@@ -216,5 +222,66 @@ model SecondOpinionMessage {
   createdAt       DateTime      @default(now())
 
   @@index([secondOpinionId])
+}
+
+model SummaryLetter {
+  id             String       @id @default(cuid())
+  consultationId String       @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  content        String       @db.Text
+  doctorName     String
+  clinicName     String?
+  patientName    String
+  patientId      String?
+  createdAt      DateTime     @default(now())
+}
+
+model Prescription {
+  id             String             @id @default(cuid())
+  consultationId String
+  consultation   Consultation       @relation(fields: [consultationId], references: [id])
+  doctorName     String
+  clinicName     String?
+  patientName    String
+  patientId      String?
+  items          PrescriptionItem[]
+  createdAt      DateTime           @default(now())
+
+  @@index([consultationId])
+}
+
+model PrescriptionItem {
+  id             String       @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicationName String
+  dose           String?
+  route          String?
+  type           String?
+  duration       String?
+  instructions   String?
+
+  @@index([prescriptionId])
+}
+
+enum DocumentRequestStatus {
+  PENDING
+  COMPLETED
+  DECLINED
+}
+
+model DocumentRequest {
+  id             String                @id @default(cuid())
+  consultationId String
+  consultation   Consultation          @relation(fields: [consultationId], references: [id])
+  patientId      String
+  requestType    String
+  status         DocumentRequestStatus @default(PENDING)
+  notes          String?               @db.Text
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([consultationId])
+  @@index([patientId])
 }
 
