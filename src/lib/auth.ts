@@ -60,9 +60,14 @@ export const authOptions: NextAuthOptions = {
         // For BOTH users, default activeRole to PATIENT
         token.activeRole = (user as any).role === "BOTH" ? "PATIENT" : (user as any).role;
       }
-      // Allow updating activeRole via session update
-      if (trigger === "update" && session?.activeRole) {
-        token.activeRole = session.activeRole;
+      // Allow updating activeRole and role via session update
+      if (trigger === "update") {
+        if (session?.role) {
+          token.role = session.role;
+        }
+        if (session?.activeRole) {
+          token.activeRole = session.activeRole;
+        }
       }
       return token;
     },
