@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isPatient, isDoctor } from "@/lib/roles";
 
 // Get ratings for a doctor (by doctorProfileId query param) or get the current doctor's ratings
 export async function GET(request: Request) {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
 
       // If the user is a patient, check if they already rated this doctor
       let userRating = null;
-      if (session.user.role === "PATIENT") {
+      if (isPatient(session.user.role)) {
         userRating = await prisma.doctorRating.findUnique({
           where: {
             doctorProfileId_patientId: {
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     }
 
     // For doctors: get their own ratings
-    if (session.user.role === "DOCTOR") {
+    if (isDoctor(session.user.role)) {
       const doctorProfile = await prisma.doctorProfile.findUnique({
         where: { userId: session.user.id },
       });
@@ -96,7 +97,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "PATIENT") {
+    if (!session || !isPatient(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

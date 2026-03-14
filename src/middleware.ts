@@ -11,13 +11,13 @@ export default withAuth(
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
 
-    // Protect doctor routes
-    if (path.startsWith("/doctor") && token?.role !== "DOCTOR") {
+    // Protect doctor routes - allow DOCTOR and BOTH roles
+    if (path.startsWith("/doctor") && token?.role !== "DOCTOR" && token?.role !== "BOTH") {
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
 
-    // Protect patient routes
-    if (path.startsWith("/patient") && token?.role !== "PATIENT") {
+    // Protect patient routes - allow PATIENT and BOTH roles
+    if (path.startsWith("/patient") && token?.role !== "PATIENT" && token?.role !== "BOTH") {
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
 

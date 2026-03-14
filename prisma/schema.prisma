@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   DOCTOR
   PATIENT
+  BOTH
   ADMIN
 }
 
@@ -75,6 +76,7 @@ model DoctorProfile {
   user          User           @relation(fields: [userId], references: [id])
   specialty     String
   bio           String?
+  description   String?        @db.Text
   licenseNumber String?
   photoUrl      String?
   clinicName    String?

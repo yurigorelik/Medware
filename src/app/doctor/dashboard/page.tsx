@@ -40,6 +40,15 @@ export default function DoctorDashboard() {
     count: number;
   } | null>(null);
 
+  // Summary of Changes state
+  const [analyzingChanges, setAnalyzingChanges] = useState(false);
+  const [changesResult, setChangesResult] = useState<{
+    patternSummary: string;
+    instructions: string[];
+    reviewedCount: number;
+  } | null>(null);
+  const [changesError, setChangesError] = useState("");
+
   useEffect(() => {
     loadDashboard();
   }, []);
@@ -48,7 +57,7 @@ export default function DoctorDashboard() {
     try {
       const [portalRes, consRes, ratingsRes] = await Promise.all([
         fetch("/api/portal"),
-        fetch("/api/consultation"),
+        fetch("/api/consultation?as=doctor"),
         fetch("/api/doctor-rating"),
       ]);
 
@@ -121,6 +130,63 @@ export default function DoctorDashboard() {
       setActionMessage("Failed to send message.");
     } finally {
       setSendingMessage(false);
+    }
+  }
+
+  async function handleAnalyzeChanges() {
+    setAnalyzingChanges(true);
+    setChangesError("");
+    setChangesResult(null);
+
+    try {
+      const res = await fetch("/api/doctor-profile/summary-of-changes", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setChangesResult(data);
+      } else {
+        const data = await res.json();
+        setChangesError(data.error || "Failed to analyze changes.");
+      }
+    } catch {
+      setChangesError("Failed to analyze changes.");
+    } finally {
+      setAnalyzingChanges(false);
+    }
+  }
+
+  async function handleAddToPortalSettings(instructions: string[]) {
+    if (!portal) return;
+
+    try {
+      // Fetch current portal data
+      const portalRes = await fetch(`/api/portal`);
+      if (!portalRes.ok) return;
+      const portalData = await portalRes.json();
+
+      const newInstructions = portalData.instructions
+        ? `${portalData.instructions}\n\n## AI-Generated Instructions (from Summary of Changes)\n${instructions.map((i) => `- ${i}`).join("\n")}`
+        : `## AI-Generated Instructions (from Summary of Changes)\n${instructions.map((i) => `- ${i}`).join("\n")}`;
+
+      const updateRes = await fetch(`/api/portal/${portal.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...portalData,
+          instructions: newInstructions,
+        }),
+      });
+
+      if (updateRes.ok) {
+        setActionMessage("Instructions added to portal settings.");
+        setTimeout(() => setActionMessage(""), 3000);
+      } else {
+        setActionMessage("Failed to update portal settings.");
+      }
+    } catch {
+      setActionMessage("Failed to update portal settings.");
     }
   }
 
@@ -287,6 +353,68 @@ export default function DoctorDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Summary of Changes */}
+      {portal && (
+        <div className="card mb-8 bg-gradient-to-r from-emerald-50 to-teal-50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-emerald-800">
+                Summary of Changes
+              </h2>
+              <p className="text-emerald-600 text-sm mt-1">
+                Analyze your edits across reviewed consultations and generate AI instructions for your portal
+              </p>
+            </div>
+            <button
+              onClick={handleAnalyzeChanges}
+              disabled={analyzingChanges}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {analyzingChanges ? "Analyzing..." : "Analyze Changes"}
+            </button>
+          </div>
+
+          {changesError && (
+            <div className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg">
+              {changesError}
+            </div>
+          )}
+
+          {changesResult && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Pattern Analysis ({changesResult.reviewedCount} reviewed consultations with edits)
+                </h3>
+                <p className="text-sm text-gray-600">{changesResult.patternSummary}</p>
+              </div>
+
+              {changesResult.instructions.length > 0 && (
+                <div className="bg-white rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                    Suggested Instructions for Portal
+                  </h3>
+                  <ul className="space-y-1.5 mb-4">
+                    {changesResult.instructions.map((instruction, i) => (
+                      <li key={i} className="text-sm text-gray-600 flex gap-2">
+                        <span className="text-emerald-500 flex-shrink-0">&#8226;</span>
+                        {instruction}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => handleAddToPortalSettings(changesResult.instructions)}
+                    className="btn-primary text-sm"
+                  >
+                    Add to Portal Settings
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

@@ -93,7 +93,7 @@ export default function PatientDashboard() {
     async function load() {
       try {
         const [consRes, profileRes] = await Promise.all([
-          fetch("/api/consultation"),
+          fetch("/api/consultation?as=patient"),
           fetch("/api/patient-profile"),
         ]);
 

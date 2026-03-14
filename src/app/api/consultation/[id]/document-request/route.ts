@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isPatient as isPatientRole, isDoctor as isDoctorRole } from "@/lib/roles";
 
 // Patient requests a document
 export async function POST(
@@ -10,7 +11,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "PATIENT") {
+    if (!session || !isPatientRole(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -111,7 +112,7 @@ export async function GET(
 
     const isPatient = consultation.patientId === session.user.id;
     const isDoctor =
-      session.user.role === "DOCTOR" &&
+      isDoctorRole(session.user.role) &&
       consultation.portal.doctorProfile.userId === session.user.id;
 
     if (!isPatient && !isDoctor) {

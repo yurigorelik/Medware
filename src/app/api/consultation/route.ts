@@ -4,12 +4,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildSystemPrompt, buildPatientMedicalSummary } from "@/lib/ai";
 import { ConsultationStatus } from "@prisma/client";
+import { isPatient, isDoctor } from "@/lib/roles";
 
 // Create a new consultation
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "PATIENT") {
+    if (!session || !isPatient(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -120,7 +121,12 @@ export async function GET(request: Request) {
       ? (statusParam as ConsultationStatus)
       : null;
 
-    if (session.user.role === "DOCTOR") {
+    const viewAs = searchParams.get("as");
+    const actAsDoctor = viewAs === "doctor"
+      ? isDoctor(session.user.role)
+      : session.user.role === "DOCTOR";
+
+    if (actAsDoctor) {
       // Get consultations for the doctor's portal
       const profile = await prisma.doctorProfile.findUnique({
         where: { userId: session.user.id },

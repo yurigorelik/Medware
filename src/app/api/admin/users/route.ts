@@ -53,7 +53,7 @@ export async function GET() {
       let totalOutputTokens = 0;
       let consultationCount = 0;
 
-      if (user.role === "PATIENT") {
+      if (user.role === "PATIENT" || user.role === "BOTH") {
         consultationCount = user.consultations.length;
         for (const c of user.consultations) {
           for (const m of c.messages) {
@@ -61,8 +61,9 @@ export async function GET() {
             totalOutputTokens += m.outputTokens;
           }
         }
-      } else if (user.role === "DOCTOR") {
-        consultationCount = user.doctorProfile?.portal?._count?.consultations || 0;
+      }
+      if (user.role === "DOCTOR" || user.role === "BOTH") {
+        consultationCount += user.doctorProfile?.portal?._count?.consultations || 0;
       }
 
       return {

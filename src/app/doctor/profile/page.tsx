@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 interface DoctorProfile {
   id: string;
   clinicName: string | null;
+  description: string | null;
   stampUrl: string | null;
   signatureUrl: string | null;
   specialty: string;
@@ -19,6 +20,7 @@ export default function DoctorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [clinicName, setClinicName] = useState("");
+  const [description, setDescription] = useState("");
 
   const stampInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +40,7 @@ export default function DoctorProfilePage() {
           const data = await res.json();
           setProfile(data);
           setClinicName(data.clinicName || "");
+          setDescription(data.description || "");
         }
       } catch (error) {
         console.error("Failed to load profile:", error);
@@ -92,6 +95,7 @@ export default function DoctorProfilePage() {
     try {
       const formData = new FormData();
       formData.append("clinicName", clinicName);
+      formData.append("description", description);
 
       if (stampFile) formData.append("stamp", stampFile);
       if (signatureFile) formData.append("signature", signatureFile);
@@ -185,6 +189,23 @@ export default function DoctorProfilePage() {
             />
             <p className="text-xs text-gray-500 mt-1">
               This will appear in the header of summary letters and prescriptions
+            </p>
+          </div>
+        </div>
+
+        <div className="card space-y-4">
+          <h2 className="text-lg font-semibold">Public Description</h2>
+          <div>
+            <label className="label">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="textarea-field"
+              rows={4}
+              placeholder="Tell patients about yourself, your experience, areas of expertise, and approach to care..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              This description will be visible to patients when they browse available doctors
             </p>
           </div>
         </div>

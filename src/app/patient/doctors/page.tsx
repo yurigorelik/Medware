@@ -7,6 +7,7 @@ interface Doctor {
   id: string;
   specialty: string;
   bio: string | null;
+  description: string | null;
   photoUrl: string | null;
   user: { name: string; email: string };
   portal: {
@@ -304,9 +305,9 @@ export default function BrowseDoctorsPage() {
                     </div>
                   </div>
 
-                  {doc.bio && (
+                  {(doc.description || doc.bio) && (
                     <p className="text-sm text-gray-600 mb-4 flex-grow">
-                      {doc.bio}
+                      {doc.description || doc.bio}
                     </p>
                   )}
 
