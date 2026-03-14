@@ -3,17 +3,34 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  const activeRole = session?.user?.activeRole || session?.user?.role;
+  const isBothRole = session?.user?.role === "BOTH";
 
   const dashboardLink =
-    session?.user?.role === "ADMIN"
+    activeRole === "ADMIN"
       ? "/admin/dashboard"
-      : session?.user?.role === "DOCTOR"
+      : activeRole === "DOCTOR"
         ? "/doctor/dashboard"
         : "/patient/dashboard";
+
+  async function handleSwitchRole() {
+    if (!isBothRole || switching) return;
+    setSwitching(true);
+    const newRole = activeRole === "DOCTOR" ? "PATIENT" : "DOCTOR";
+    await update({ activeRole: newRole });
+    setMenuOpen(false);
+    setSwitching(false);
+    const newDashboard = newRole === "DOCTOR" ? "/doctor/dashboard" : "/patient/dashboard";
+    router.push(newDashboard);
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 h-16">
@@ -41,11 +58,11 @@ export default function Navbar() {
                   {session.user.name}
                 </span>
                 <span className={`hidden sm:block badge text-xs ${
-                  session.user.role === "ADMIN"
+                  activeRole === "ADMIN"
                     ? "bg-red-100 text-red-700"
                     : "bg-primary-100 text-primary-700"
                 }`}>
-                  {session.user.role}
+                  {activeRole}
                 </span>
               </button>
 
@@ -58,7 +75,7 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
-                  {session.user.role === "DOCTOR" && (
+                  {activeRole === "DOCTOR" && (
                     <>
                       <Link
                         href="/doctor/profile"
@@ -76,7 +93,7 @@ export default function Navbar() {
                       </Link>
                     </>
                   )}
-                  {session.user.role === "ADMIN" && (
+                  {activeRole === "ADMIN" && (
                     <Link
                       href="/admin/users"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -84,6 +101,17 @@ export default function Navbar() {
                     >
                       Manage Users
                     </Link>
+                  )}
+                  {isBothRole && (
+                    <button
+                      onClick={handleSwitchRole}
+                      disabled={switching}
+                      className="block w-full text-left px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 font-medium"
+                    >
+                      {switching
+                        ? "Switching..."
+                        : `Switch to ${activeRole === "DOCTOR" ? "Patient" : "Doctor"} View`}
+                    </button>
                   )}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}

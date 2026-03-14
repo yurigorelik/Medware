@@ -53,10 +53,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
+        // For BOTH users, default activeRole to PATIENT
+        token.activeRole = (user as any).role === "BOTH" ? "PATIENT" : (user as any).role;
+      }
+      // Allow updating activeRole via session update
+      if (trigger === "update" && session?.activeRole) {
+        token.activeRole = session.activeRole;
       }
       return token;
     },
@@ -64,6 +70,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
+        (session.user as any).activeRole = token.activeRole || token.role;
       }
       return session;
     },

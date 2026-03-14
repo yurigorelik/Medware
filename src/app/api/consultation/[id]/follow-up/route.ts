@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildFollowUpSystemPrompt, buildPatientMedicalSummary } from "@/lib/ai";
+import { isPatient } from "@/lib/roles";
 
 // Create a follow-up consultation from a completed one
 export async function POST(
@@ -11,7 +12,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "PATIENT") {
+    if (!session || !isPatient(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

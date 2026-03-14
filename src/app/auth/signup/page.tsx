@@ -38,7 +38,7 @@ export default function SignUpPage() {
       return;
     }
 
-    if (formData.role === "DOCTOR" && !formData.specialty) {
+    if ((formData.role === "DOCTOR" || formData.role === "BOTH") && !formData.specialty) {
       setError("Please specify your medical specialty");
       return;
     }
@@ -100,6 +100,7 @@ export default function SignUpPage() {
             >
               <option value="PATIENT">Patient</option>
               <option value="DOCTOR">Doctor</option>
+              <option value="BOTH">Both (Patient & Doctor)</option>
             </select>
           </div>
 
@@ -133,7 +134,7 @@ export default function SignUpPage() {
             />
           </div>
 
-          {formData.role === "DOCTOR" && (
+          {(formData.role === "DOCTOR" || formData.role === "BOTH") && (
             <>
               <div>
                 <label htmlFor="specialty" className="label">

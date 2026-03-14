@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { isDoctor } from "@/lib/roles";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "DOCTOR") {
+    if (!session || !isDoctor(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -33,12 +34,13 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "DOCTOR") {
+    if (!session || !isDoctor(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
     const clinicName = formData.get("clinicName") as string | null;
+    const description = formData.get("description") as string | null;
     const stampFile = formData.get("stamp") as File | null;
     const signatureFile = formData.get("signature") as File | null;
     const removeStamp = formData.get("removeStamp") === "true";
@@ -56,6 +58,10 @@ export async function PUT(request: Request) {
 
     if (clinicName !== null) {
       updateData.clinicName = clinicName || null;
+    }
+
+    if (description !== null) {
+      updateData.description = description || null;
     }
 
     if (removeStamp) {

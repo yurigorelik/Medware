@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!["DOCTOR", "PATIENT"].includes(role)) {
+    if (!["DOCTOR", "PATIENT", "BOTH"].includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
@@ -38,12 +38,17 @@ export async function POST(request: Request) {
         password: hashedPassword,
         role,
         emailVerified: true,
-        ...(role === "DOCTOR" && {
+        ...((role === "DOCTOR" || role === "BOTH") && {
           doctorProfile: {
             create: {
               specialty: specialty || "General Medicine",
               licenseNumber: licenseNumber || null,
             },
+          },
+        }),
+        ...((role === "PATIENT" || role === "BOTH") && {
+          patientProfile: {
+            create: {},
           },
         }),
       },

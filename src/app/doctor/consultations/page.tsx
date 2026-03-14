@@ -27,7 +27,7 @@ export default function DoctorConsultationsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/consultation");
+        const res = await fetch("/api/consultation?as=doctor");
         if (res.ok) {
           const data = await res.json();
           setConsultations(Array.isArray(data) ? data : []);
