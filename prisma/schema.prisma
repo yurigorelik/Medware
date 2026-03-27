@@ -31,7 +31,7 @@ enum MessageRole {
 model User {
   id                     String         @id @default(cuid())
   email                  String         @unique
-  password               String
+  password               String?
   name                   String
   role                   Role
   isBlocked              Boolean        @default(false)
@@ -42,11 +42,31 @@ model User {
   lastActiveAt           DateTime?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
+  accounts               Account[]
   doctorProfile          DoctorProfile?
   consultations          Consultation[]
   patientProfile         PatientProfile?
   doctorRatings          DoctorRating[]
   secondOpinions         SecondOpinion[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model PatientProfile {
