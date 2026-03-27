@@ -1,10 +1,15 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -26,6 +31,10 @@ export const authOptions: NextAuthOptions = {
 
         if (user.isBlocked) {
           throw new Error("Your account has been blocked. Please contact support.");
+        }
+
+        if (!user.password) {
+          throw new Error("This account uses Google login. Please sign in with Google.");
         }
 
         const isValid = await bcrypt.compare(
@@ -53,8 +62,84 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (user) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const email = user.email!;
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+          include: { accounts: true },
+        });
+
+        if (existingUser) {
+          if (existingUser.isBlocked) {
+            return false;
+          }
+
+          // Link Google account if not already linked
+          const hasGoogleAccount = existingUser.accounts.some(
+            (a) => a.provider === "google"
+          );
+          if (!hasGoogleAccount) {
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                refresh_token: account.refresh_token as string | undefined,
+                access_token: account.access_token as string | undefined,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token as string | undefined,
+                session_state: account.session_state as string | undefined,
+              },
+            });
+          }
+        } else {
+          // Create new user with PATIENT role by default
+          const newUser = await prisma.user.create({
+            data: {
+              email,
+              name: user.name || email.split("@")[0],
+              role: "PATIENT",
+              emailVerified: true,
+              accounts: {
+                create: {
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  refresh_token: account.refresh_token as string | undefined,
+                  access_token: account.access_token as string | undefined,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token as string | undefined,
+                  session_state: account.session_state as string | undefined,
+                },
+              },
+              patientProfile: {
+                create: {},
+              },
+            },
+          });
+          user.id = newUser.id;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account, trigger, session }) {
+      if (account?.provider === "google") {
+        // Fetch the database user to get role and id
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email! },
+        });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.activeRole = dbUser.role === "BOTH" ? "PATIENT" : dbUser.role;
+        }
+      } else if (user) {
         token.role = (user as any).role;
         token.id = user.id;
         // For BOTH users, default activeRole to PATIENT
