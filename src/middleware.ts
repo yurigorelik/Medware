@@ -21,6 +21,8 @@ export default withAuth(
       return NextResponse.redirect(new URL("/auth/signin", req.url));
     }
 
+    // Visit scheduling is open to any authenticated user (patient or doctor side).
+
     return NextResponse.next();
   },
   {
@@ -31,5 +33,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/doctor/:path*", "/patient/:path*", "/admin/:path*"],
+  matcher: ["/doctor/:path*", "/patient/:path*", "/admin/:path*", "/visits/:path*"],
 };

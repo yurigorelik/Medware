@@ -28,6 +28,30 @@ enum MessageRole {
   USER
 }
 
+enum VisitStatus {
+  REQUESTED
+  ACCEPTED
+  BOOKED
+  DECLINED
+  CANCELLED
+  COMPLETED
+}
+
+enum VisitModality {
+  IN_PERSON
+  VIDEO
+}
+
+enum VisitParty {
+  PATIENT
+  DOCTOR
+}
+
+enum SlotSource {
+  CUSTOM
+  EXISTING
+}
+
 model User {
   id                     String         @id @default(cuid())
   email                  String         @unique
@@ -40,6 +64,9 @@ model User {
   passwordResetToken     String?        @unique
   passwordResetExpires   DateTime?
   lastActiveAt           DateTime?
+  isDoctor               Boolean        @default(false)
+  specialty              String?
+  bio                    String?        @db.Text
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
   accounts               Account[]
@@ -48,6 +75,9 @@ model User {
   patientProfile         PatientProfile?
   doctorRatings          DoctorRating[]
   secondOpinions         SecondOpinion[]
+  patientVisits          Visit[]        @relation("PatientVisits")
+  doctorVisits           Visit[]        @relation("DoctorVisits")
+  slots                  Slot[]         @relation("DoctorSlots")
 }
 
 model Account {
@@ -305,5 +335,63 @@ model DocumentRequest {
 
   @@index([consultationId])
   @@index([patientId])
+}
+
+model Visit {
+  id              String        @id @default(cuid())
+  patientId       String
+  patient         User          @relation("PatientVisits", fields: [patientId], references: [id])
+  doctorId        String
+  doctor          User          @relation("DoctorVisits", fields: [doctorId], references: [id])
+  requestedBy     VisitParty
+  status          VisitStatus   @default(REQUESTED)
+  reason          String?       @db.Text
+  modality        VisitModality @default(IN_PERSON)
+  meetingLink     String?
+  location        String?
+  costCents       Int?
+  currency        String        @default("USD")
+  terms           String?       @db.Text
+  slotSource      SlotSource?
+  // The slot the patient secured for this visit. NOTE: no onDelete: Cascade —
+  // removing the booked slot must not delete the visit.
+  scheduledSlotId String?       @unique
+  scheduledSlot   Slot?         @relation("ScheduledSlot", fields: [scheduledSlotId], references: [id])
+  scheduledStart  DateTime?
+  scheduledEnd    DateTime?
+  termsAcceptedAt DateTime?
+  acceptedAt      DateTime?
+  declinedAt      DateTime?
+  cancelledAt     DateTime?
+  cancelledBy     VisitParty?
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  // Slots created specifically for this visit (slotSource = CUSTOM).
+  customSlots     Slot[]        @relation("CustomSlots")
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+}
+
+model Slot {
+  id            String   @id @default(cuid())
+  doctorId      String
+  doctor        User     @relation("DoctorSlots", fields: [doctorId], references: [id])
+  start         DateTime
+  end           DateTime
+  booked        Boolean  @default(false)
+  // null = standing availability; set = custom slot offered for a specific visit.
+  visitId       String?
+  visit         Visit?   @relation("CustomSlots", fields: [visitId], references: [id])
+  // Back-relation: the visit that secured this slot (if any).
+  bookedByVisit Visit?   @relation("ScheduledSlot")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([doctorId])
+  @@index([visitId])
+  @@index([booked])
 }
 
