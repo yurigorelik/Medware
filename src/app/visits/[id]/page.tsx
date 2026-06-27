@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { statusBadgeClass, statusLabel, formatCost } from "@/lib/visitFormat";
+import SlotRangePicker from "@/components/SlotRangePicker";
 
 interface Slot {
   id: string;
@@ -42,12 +43,6 @@ function fmtRange(start: string, end: string): string {
   const s = new Date(start);
   const e = new Date(end);
   return `${s.toLocaleString()} – ${e.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-}
-
-// A datetime-local value (no offset) is parsed as local time by the Date
-// constructor, so toISOString() yields the correct UTC instant directly.
-function toIso(localValue: string): string {
-  return new Date(localValue).toISOString();
 }
 
 export default function VisitDetailPage({ params }: { params: { id: string } }) {
@@ -313,16 +308,8 @@ function AcceptForm({
   const [location, setLocation] = useState("");
   const [terms, setTerms] = useState("");
   const [slotSource, setSlotSource] = useState<"CUSTOM" | "EXISTING">("CUSTOM");
-  const [slots, setSlots] = useState<{ start: string; end: string }[]>([
-    { start: "", end: "" },
-  ]);
+  const [slots, setSlots] = useState<{ startIso: string; endIso: string }[]>([]);
   const [formError, setFormError] = useState("");
-
-  function updateSlot(i: number, field: "start" | "end", value: string) {
-    setSlots((prev) =>
-      prev.map((s, idx) => (idx === i ? { ...s, [field]: value } : s))
-    );
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -346,25 +333,11 @@ function AcceptForm({
 
     let customSlots: { start: string; end: string }[] | undefined;
     if (slotSource === "CUSTOM") {
-      const filled = slots.filter((s) => s.start && s.end);
-      if (filled.length === 0) {
+      if (slots.length === 0) {
         setFormError("Add at least one slot, or use your standing availability.");
         return;
       }
-      for (const s of filled) {
-        if (new Date(s.end) <= new Date(s.start)) {
-          setFormError("Each slot's end must be after its start.");
-          return;
-        }
-        if (new Date(s.start) <= new Date()) {
-          setFormError("Slots must be in the future.");
-          return;
-        }
-      }
-      customSlots = filled.map((s) => ({
-        start: toIso(s.start),
-        end: toIso(s.end),
-      }));
+      customSlots = slots.map((s) => ({ start: s.startIso, end: s.endIso }));
     }
 
     await runAction("/accept", {
@@ -480,44 +453,33 @@ function AcceptForm({
 
       {slotSource === "CUSTOM" ? (
         <div className="space-y-3">
-          {slots.map((s, i) => (
-            <div key={i} className="flex flex-wrap items-end gap-2">
-              <div>
-                <label className="label">Start</label>
-                <input
-                  type="datetime-local"
-                  value={s.start}
-                  onChange={(e) => updateSlot(i, "start", e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="label">End</label>
-                <input
-                  type="datetime-local"
-                  value={s.end}
-                  onChange={(e) => updateSlot(i, "end", e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              {slots.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setSlots((prev) => prev.filter((_, idx) => idx !== i))}
-                  className="btn-secondary text-sm"
+          <SlotRangePicker
+            onAdd={(slot) => setSlots((prev) => [...prev, slot])}
+            addLabel="Add slot"
+          />
+          {slots.length > 0 && (
+            <div className="space-y-2">
+              {slots.map((s, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200"
                 >
-                  Remove
-                </button>
-              )}
+                  <span className="text-sm text-gray-900">
+                    {fmtRange(s.startIso, s.endIso)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSlots((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    className="text-sm text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setSlots((prev) => [...prev, { start: "", end: "" }])}
-            className="text-sm text-primary-600 hover:text-primary-700"
-          >
-            + Add another slot
-          </button>
+          )}
         </div>
       ) : (
         <p className="text-sm text-gray-500">
