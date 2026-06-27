@@ -5,12 +5,38 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
+// Map NextAuth error codes (passed back as ?error=) to readable messages so a
+// failed OAuth attempt doesn't silently bounce back to a blank form.
+function describeAuthError(code: string): string {
+  switch (code) {
+    case "OAuthSignin":
+      return "Couldn't start Google sign-in. Google login isn't fully configured on the server yet — please try email sign-in or contact support.";
+    case "OAuthCallback":
+    case "Callback":
+      return "Google sign-in failed on the callback. The redirect URL may be misconfigured.";
+    case "OAuthAccountNotLinked":
+      return "This email is already registered with a different sign-in method. Please sign in the original way.";
+    case "OAuthCreateAccount":
+    case "Configuration":
+      return "There's a problem with the sign-in configuration on the server.";
+    case "AccessDenied":
+      return "Access was denied. Please try again.";
+    case "CredentialsSignin":
+      return "Invalid email or password.";
+    default:
+      return "Sign-in failed. Please try again.";
+  }
+}
+
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const errorParam = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    errorParam ? describeAuthError(errorParam) : ""
+  );
   const [loading, setLoading] = useState(false);
 
   const callbackUrl = searchParams.get("callbackUrl") || "";
