@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import SlotRangePicker from "@/components/SlotRangePicker";
 
 interface AvailabilitySlot {
   id: string;
@@ -9,12 +10,6 @@ interface AvailabilitySlot {
   end: string;
   booked: boolean;
   bookedByVisit: { id: string; status: string } | null;
-}
-
-// A datetime-local value (no offset) is local time; toISOString() gives the
-// correct UTC instant without any manual offset math.
-function toIso(localValue: string): string {
-  return new Date(localValue).toISOString();
 }
 
 export default function AvailabilityPage() {
@@ -29,8 +24,6 @@ export default function AvailabilityPage() {
 
   // Availability
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
   const [addingSlot, setAddingSlot] = useState(false);
   const [slotError, setSlotError] = useState("");
 
@@ -88,31 +81,16 @@ export default function AvailabilityPage() {
     }
   }
 
-  async function addSlot(e: React.FormEvent) {
-    e.preventDefault();
+  async function addSlot(slot: { startIso: string; endIso: string }) {
     setSlotError("");
-    if (!start || !end) {
-      setSlotError("Enter both a start and end time.");
-      return;
-    }
-    if (new Date(end) <= new Date(start)) {
-      setSlotError("End must be after start.");
-      return;
-    }
-    if (new Date(start) <= new Date()) {
-      setSlotError("Slots must be in the future.");
-      return;
-    }
     setAddingSlot(true);
     try {
       const res = await fetch("/api/visits/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start: toIso(start), end: toIso(end) }),
+        body: JSON.stringify({ start: slot.startIso, end: slot.endIso }),
       });
       if (res.ok) {
-        setStart("");
-        setEnd("");
         await loadAvailability();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -226,35 +204,12 @@ export default function AvailabilityPage() {
           </p>
         )}
 
-        <form onSubmit={addSlot} className="flex flex-wrap items-end gap-2">
-          <div>
-            <label className="label">Start</label>
-            <input
-              type="datetime-local"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="input-field"
-              disabled={!isDoctor}
-            />
-          </div>
-          <div>
-            <label className="label">End</label>
-            <input
-              type="datetime-local"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className="input-field"
-              disabled={!isDoctor}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!isDoctor || addingSlot}
-            className="btn-primary text-sm"
-          >
-            {addingSlot ? "Adding..." : "Add slot"}
-          </button>
-        </form>
+        <SlotRangePicker
+          onAdd={addSlot}
+          disabled={!isDoctor}
+          busy={addingSlot}
+          addLabel="Add slot"
+        />
 
         {slotError && <p className="text-sm text-red-600">{slotError}</p>}
 
