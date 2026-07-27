@@ -4,6 +4,17 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Single place to change the model the whole platform talks to.
+// Override per-deployment with ANTHROPIC_MODEL without touching code.
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+
+// Sonnet 5 runs adaptive thinking when `thinking` is omitted, and max_tokens
+// caps thinking plus response text together. These calls want the whole budget
+// spent on the answer, so thinking is turned off explicitly. Swap to
+// { type: "adaptive" } (and raise max_tokens) if you want the model to reason
+// before answering.
+const THINKING = { type: "disabled" } as const;
+
 interface PortalConfig {
   doctorName: string;
   medicalField: string;
@@ -318,7 +329,8 @@ export async function getChatResponse(
   );
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: MODEL,
+    thinking: THINKING,
     max_tokens: 2048,
     system: systemPrompt,
     messages: anthropicMessages,
@@ -361,7 +373,8 @@ Based on the following consultation conversation, generate a comprehensive case 
 ${conversationText}`;
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: MODEL,
+    thinking: THINKING,
     max_tokens: 4096,
     messages: [
       {
@@ -467,7 +480,8 @@ ${diagnosisText}
 ${workupText}`;
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: MODEL,
+    thinking: THINKING,
     max_tokens: 2048,
     messages: [{ role: "user", content: prompt }],
   });
