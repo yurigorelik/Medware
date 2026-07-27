@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface DoctorOption {
   id: string;
@@ -100,15 +101,11 @@ export default function NewVisitPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
-      <Link
-        href="/visits"
-        className="text-sm text-primary-600 hover:text-primary-700"
-      >
-        &larr; Back to visits
-      </Link>
-      <h1 className="text-2xl font-bold text-gray-900 mt-2 mb-6">
-        Request a visit
-      </h1>
+      <PageHeader
+        breadcrumbs={[{ label: "Visits", href: "/visits" }, { label: "Request a visit" }]}
+        title="Request a visit"
+        description="Pick a doctor, choose a modality, and propose a time."
+      />
 
       {canActAsDoctor && (
         <div className="flex gap-2 mb-6">

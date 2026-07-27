@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface DoctorProfile {
   id: string;
@@ -144,23 +146,24 @@ export default function DoctorProfilePage() {
     : signaturePreview || (profile?.signatureUrl ? `/api${profile.signatureUrl}` : null);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Profile Settings
-          </h1>
-          <p className="text-gray-600">
-            Manage your clinic name, signature, and stamp for summary letters and prescriptions
-          </p>
-        </div>
-        <button
-          className="btn-secondary text-sm"
-          onClick={() => router.push("/doctor/dashboard")}
-        >
-          &larr; Dashboard
-        </button>
-      </div>
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/doctor/dashboard" },
+          { label: "Profile settings" },
+        ]}
+        title="Profile settings"
+        description="Manage your clinic name, signature, and stamp for summary letters and prescriptions."
+        actions={
+          <button
+            className="btn-secondary"
+            onClick={() => router.push("/doctor/dashboard")}
+          >
+            <Icon name="dashboard" className="h-4 w-4" />
+            Dashboard
+          </button>
+        }
+      />
 
       {message && (
         <div

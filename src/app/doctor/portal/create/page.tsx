@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function CreatePortalPage() {
   const router = useRouter();
@@ -53,14 +54,14 @@ export default function CreatePortalPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">
-        Create Your Portal
-      </h1>
-      <p className="text-gray-600 mb-8">
-        Configure the AI consultation assistant with your medical expertise,
-        guidelines, and protocols. The AI will use this information to conduct
-        patient consultations on your behalf.
-      </p>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/doctor/dashboard" },
+          { label: "Create portal" },
+        ]}
+        title="Create your portal"
+        description="Configure the AI consultation assistant with your medical expertise, guidelines, and protocols. The AI will use this information to conduct patient consultations on your behalf."
+      />
 
       {error && (
         <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
