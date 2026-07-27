@@ -2,6 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 export default function EditPortalPage() {
   const params = useParams();
@@ -90,26 +93,29 @@ export default function EditPortalPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading portal...</div>
-      </div>
+      <LoadingScreen label="Loading portal" />
     );
   }
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Portal</h1>
-          <p className="text-gray-600">Update your portal configuration</p>
-        </div>
-        <button
-          className="btn-secondary text-sm"
-          onClick={() => router.push("/doctor/dashboard")}
-        >
-          &larr; Dashboard
-        </button>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/doctor/dashboard" },
+          { label: "Edit portal" },
+        ]}
+        title="Edit portal"
+        description="Update your portal configuration."
+        actions={
+          <button
+            className="btn-secondary"
+            onClick={() => router.push("/doctor/dashboard")}
+          >
+            <Icon name="dashboard" className="h-4 w-4" />
+            Dashboard
+          </button>
+        }
+      />
 
       {error && (
         <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">

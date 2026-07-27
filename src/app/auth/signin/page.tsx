@@ -2,6 +2,8 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
+import Icon from "@/components/ui/Icon";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
@@ -85,13 +87,23 @@ function SignInForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
-      <div className="card max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center mb-6">Sign In</h1>
+    <div className="auth-shell">
+      <div className="w-full max-w-md animate-fade-in-up">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Logo href="/" />
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-gray-900">
+            Welcome back
+          </h1>
+          <p className="mt-1.5 text-sm text-gray-500">
+            Sign in to continue your consultations.
+          </p>
+        </div>
 
+        <div className="card shadow-lg">
         {error && (
-          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
-            {error}
+          <div className="alert-error mb-4">
+            <Icon name="alert" className="h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -182,6 +194,7 @@ function SignInForm() {
             Sign up
           </Link>
         </p>
+        </div>
       </div>
     </div>
   );

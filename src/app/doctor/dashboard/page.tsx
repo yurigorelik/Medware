@@ -4,6 +4,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { EmptyState, LoadingScreen, StatCard } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface Portal {
   id: string;
@@ -192,9 +195,7 @@ export default function DoctorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading dashboard...</div>
-      </div>
+      <LoadingScreen label="Loading dashboard" />
     );
   }
 
@@ -209,24 +210,21 @@ export default function DoctorDashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome, Dr. {session?.user?.name}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage your portal and review patient consultations
-          </p>
-        </div>
-        <Link href="/doctor/profile" className="btn-secondary text-sm">
-          Profile Settings
-        </Link>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        title={`Welcome, Dr. ${session?.user?.name ?? ""}`}
+        description="Manage your portal and review patient consultations."
+        actions={
+          <Link href="/doctor/profile" className="btn-secondary">
+            <Icon name="settings" className="h-4 w-4" />
+            Profile settings
+          </Link>
+        }
+      />
 
       {/* Action Message */}
       {actionMessage && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${actionMessage.includes("Failed") || actionMessage.includes("error") ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+        <div className={`mb-4 ${actionMessage.includes("Failed") || actionMessage.includes("error") ? "alert-error" : "alert-success"}`}>
           {actionMessage}
         </div>
       )}
@@ -417,25 +415,26 @@ export default function DoctorDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="card">
-          <div className="text-3xl font-bold text-yellow-600">
-            {pendingReview.length}
-          </div>
-          <div className="text-sm text-gray-600">Pending Review</div>
-        </div>
-        <div className="card">
-          <div className="text-3xl font-bold text-blue-600">
-            {activeConsultations.length}
-          </div>
-          <div className="text-sm text-gray-600">Active Consultations</div>
-        </div>
-        <div className="card">
-          <div className="text-3xl font-bold text-green-600">
-            {completedConsultations.length}
-          </div>
-          <div className="text-sm text-gray-600">Completed</div>
-        </div>
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          label="Pending review"
+          value={pendingReview.length}
+          icon="clock"
+          tone="amber"
+          hint="Cases waiting on your sign-off"
+        />
+        <StatCard
+          label="Active consultations"
+          value={activeConsultations.length}
+          icon="activity"
+          tone="primary"
+        />
+        <StatCard
+          label="Completed"
+          value={completedConsultations.length}
+          icon="check"
+          tone="emerald"
+        />
       </div>
 
       {/* Patient Ratings */}
@@ -557,10 +556,11 @@ export default function DoctorDashboard() {
           </Link>
         </div>
         {consultations.length === 0 ? (
-          <div className="card text-center text-gray-500 py-12">
-            No consultations yet. Patients will appear here once they start
-            consultations through your portal.
-          </div>
+          <EmptyState
+            icon="inbox"
+            title="No consultations yet"
+            description="Patients will appear here once they start consultations through your portal."
+          />
         ) : (
           <div className="space-y-3">
             {consultations.slice(0, 5).map((c) => (

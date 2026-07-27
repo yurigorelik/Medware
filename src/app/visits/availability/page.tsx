@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SlotRangePicker from "@/components/SlotRangePicker";
+import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface AvailabilitySlot {
   id: string;
@@ -122,18 +124,17 @@ export default function AvailabilityPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingScreen label="Loading" />
     );
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
-      <Link href="/visits" className="text-sm text-primary-600 hover:text-primary-700">
-        &larr; Back to visits
-      </Link>
-      <h1 className="text-2xl font-bold text-gray-900 mt-2 mb-6">Doctor area</h1>
+      <PageHeader
+        breadcrumbs={[{ label: "Visits", href: "/visits" }, { label: "Doctor area" }]}
+        title="Doctor area"
+        description="Turn on doctor mode and publish the hours patients can book."
+      />
 
       {/* Doctor mode */}
       <form onSubmit={saveMode} className="card space-y-5 mb-8">

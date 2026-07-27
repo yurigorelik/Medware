@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingScreen, StatCard } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface Stats {
   totalUsers: number;
@@ -53,68 +56,65 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading dashboard...</div>
-      </div>
+      <LoadingScreen label="Loading dashboard" />
     );
   }
 
   if (!stats) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-red-500">Failed to load dashboard data</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Platform overview and management</p>
-        </div>
-        <Link href="/admin/users" className="btn-primary text-sm">
-          Manage Users
-        </Link>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        title="Admin dashboard"
+        description="Platform overview and management."
+        actions={
+          <Link href="/admin/users" className="btn-primary">
+            <Icon name="users" className="h-4 w-4" />
+            Manage users
+          </Link>
+        }
+      />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="card">
-          <p className="text-sm text-gray-500">Total Users</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
-          <div className="mt-2 flex space-x-3 text-xs text-gray-500">
-            <span>{stats.totalDoctors} doctors</span>
-            <span>{stats.totalPatients} patients</span>
-          </div>
-        </div>
-
-        <div className="card">
-          <p className="text-sm text-gray-500">Consultations</p>
-          <p className="text-3xl font-bold text-gray-900">{stats.totalConsultations}</p>
-          <div className="mt-2 flex space-x-3 text-xs text-gray-500">
-            <span className="text-green-600">{stats.activeConsultations} active</span>
-            <span className="text-blue-600">{stats.completedConsultations} completed</span>
-          </div>
-        </div>
-
-        <div className="card">
-          <p className="text-sm text-gray-500">AI Token Usage</p>
-          <p className="text-3xl font-bold text-gray-900">{formatTokens(stats.totalTokens)}</p>
-          <div className="mt-2 flex space-x-3 text-xs text-gray-500">
-            <span>In: {formatTokens(stats.totalInputTokens)}</span>
-            <span>Out: {formatTokens(stats.totalOutputTokens)}</span>
-          </div>
-        </div>
-
-        <div className="card">
-          <p className="text-sm text-gray-500">Blocked Users</p>
-          <p className="text-3xl font-bold text-red-600">{stats.blockedUsers}</p>
-          <div className="mt-2 text-xs text-gray-500">
-            {stats.blockedUsers === 0 ? "No blocked users" : "Users blocked from access"}
-          </div>
-        </div>
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total users"
+          value={stats.totalUsers}
+          icon="users"
+          tone="primary"
+          hint={`${stats.totalDoctors} doctors · ${stats.totalPatients} patients`}
+        />
+        <StatCard
+          label="Consultations"
+          value={stats.totalConsultations}
+          icon="message"
+          tone="accent"
+          hint={`${stats.activeConsultations} active · ${stats.completedConsultations} completed`}
+        />
+        <StatCard
+          label="AI token usage"
+          value={formatTokens(stats.totalTokens)}
+          icon="sparkles"
+          tone="gray"
+          hint={`In ${formatTokens(stats.totalInputTokens)} · Out ${formatTokens(stats.totalOutputTokens)}`}
+        />
+        <StatCard
+          label="Blocked users"
+          value={stats.blockedUsers}
+          icon="lock"
+          tone="red"
+          hint={
+            stats.blockedUsers === 0
+              ? "No blocked users"
+              : "Users blocked from access"
+          }
+        />
       </div>
 
       {/* Recent Activity */}

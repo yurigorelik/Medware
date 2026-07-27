@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { statusBadgeClass, statusLabel, formatCost } from "@/lib/visitFormat";
+import { EmptyState, LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface VisitListItem {
   id: string;
@@ -37,7 +40,7 @@ function VisitRow({
   return (
     <Link
       href={`/visits/${visit.id}`}
-      className="card flex items-center justify-between hover:border-primary-200 transition-colors"
+      className="card-interactive flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="min-w-0">
         <div className="font-medium text-gray-900">{otherLabel}</div>
@@ -97,9 +100,7 @@ export default function VisitsHubPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading visits...</div>
-      </div>
+      <LoadingScreen label="Loading visits" />
     );
   }
 
@@ -108,34 +109,40 @@ export default function VisitsHubPage() {
   const asDoctor = visits.filter((v) => v.doctorId === myId);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Visits</h1>
-          <p className="text-gray-600 mt-1">
-            Schedule in-person or video visits with a doctor.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Link href="/visits/availability" className="btn-secondary text-sm">
-            Doctor area
-          </Link>
-          <Link href="/visits/new" className="btn-primary text-sm">
-            Request a visit
-          </Link>
-        </div>
-      </div>
+    <div className="page-shell-narrow">
+      <PageHeader
+        title="Visits"
+        description="Schedule in-person or video visits with a doctor."
+        actions={
+          <>
+            <Link href="/visits/availability" className="btn-secondary">
+              <Icon name="clock" className="h-4 w-4" />
+              Doctor area
+            </Link>
+            <Link href="/visits/new" className="btn-primary">
+              <Icon name="plus" className="h-4 w-4" />
+              Request a visit
+            </Link>
+          </>
+        }
+      />
 
       {/* As a patient */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold mb-3">As a patient</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="section-title">As a patient</h2>
+          {asPatient.length > 0 && (
+            <span className="badge-neutral">{asPatient.length}</span>
+          )}
+        </div>
         {asPatient.length === 0 ? (
-          <div className="card text-center text-gray-500 py-10">
-            You have no visits as a patient yet.{" "}
-            <Link href="/visits/new" className="text-primary-600 hover:text-primary-700">
-              Request one &rarr;
-            </Link>
-          </div>
+          <EmptyState
+            icon="calendar"
+            title="No visits yet"
+            description="Request a video or in-person visit with any doctor on the platform."
+            actionLabel="Request a visit"
+            actionHref="/visits/new"
+          />
         ) : (
           <div className="space-y-3">
             {asPatient.map((v) => (
@@ -148,7 +155,12 @@ export default function VisitsHubPage() {
       {/* As a doctor */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">As a doctor</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="section-title">As a doctor</h2>
+            {asDoctor.length > 0 && (
+              <span className="badge-neutral">{asDoctor.length}</span>
+            )}
+          </div>
           {!isDoctor && (
             <Link
               href="/visits/availability"
@@ -159,11 +171,21 @@ export default function VisitsHubPage() {
           )}
         </div>
         {asDoctor.length === 0 ? (
-          <div className="card text-center text-gray-500 py-10">
-            {isDoctor
-              ? "No patients have requested a visit with you yet."
-              : "Enable doctor mode in the doctor area to receive visit requests."}
-          </div>
+          <EmptyState
+            icon="inbox"
+            title={isDoctor ? "No requests yet" : "Doctor mode is off"}
+            description={
+              isDoctor
+                ? "No patients have requested a visit with you yet."
+                : "Enable doctor mode in the doctor area to start receiving visit requests."
+            }
+            {...(isDoctor
+              ? {}
+              : {
+                  actionLabel: "Open doctor area",
+                  actionHref: "/visits/availability",
+                })}
+          />
         ) : (
           <div className="space-y-3">
             {asDoctor.map((v) => (

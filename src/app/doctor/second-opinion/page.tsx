@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface SecondOpinion {
   id: string;
@@ -63,9 +66,7 @@ export default function SecondOpinionListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingScreen label="Loading" />
     );
   }
 
@@ -73,28 +74,31 @@ export default function SecondOpinionListPage() {
   const completed = opinions.filter((o) => o.status === "COMPLETED");
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            AI Second Opinion
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Get an AI-powered second opinion on your patients
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/doctor/dashboard" className="btn-secondary text-sm">
-            &larr; Dashboard
-          </Link>
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="btn-primary text-sm"
-          >
-            New Second Opinion
-          </button>
-        </div>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/doctor/dashboard" },
+          { label: "AI second opinion" },
+        ]}
+        eyebrow="Clinician tool"
+        title="AI second opinion"
+        description="Get an AI-powered second opinion on your patients."
+        actions={
+          <>
+            <Link href="/doctor/dashboard" className="btn-secondary">
+              <Icon name="dashboard" className="h-4 w-4" />
+              Dashboard
+            </Link>
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="btn-primary"
+            >
+              <Icon name="plus" className="h-4 w-4" />
+              New second opinion
+            </button>
+          </>
+        }
+      />
 
       {/* New Second Opinion Modal */}
       {showNewModal && (

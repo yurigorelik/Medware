@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface User {
   id: string;
@@ -105,25 +108,30 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading users...</div>
-      </div>
+      <LoadingScreen label="Loading users" />
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-sm text-gray-500 mt-1">
+    <div className="page-shell">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Admin", href: "/admin/dashboard" },
+          { label: "Users" },
+        ]}
+        title="User management"
+        meta={
+          <span className="badge-neutral">
             {users.filter((u) => u.role !== "ADMIN").length} total users
-          </p>
-        </div>
-        <Link href="/admin/dashboard" className="btn-secondary text-sm">
-          Back to Dashboard
-        </Link>
-      </div>
+          </span>
+        }
+        actions={
+          <Link href="/admin/dashboard" className="btn-secondary">
+            <Icon name="dashboard" className="h-4 w-4" />
+            Back to dashboard
+          </Link>
+        }
+      />
 
       {/* Filters */}
       <div className="card mb-6">

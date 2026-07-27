@@ -3,11 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isDoctor } from "@/lib/roles";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { anthropic, MODEL, THINKING, firstText } from "@/lib/ai";
 
 export async function POST() {
   try {
@@ -108,15 +104,13 @@ Respond with ONLY a valid JSON object (no markdown, no code blocks):
 }`;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: MODEL,
+      thinking: THINKING,
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     });
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    const responseText = textBlock
-      ? (textBlock as Anthropic.TextBlock).text
-      : "";
+    const responseText = firstText(response);
 
     let cleanedText = responseText.trim();
     const codeBlockMatch = cleanedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);

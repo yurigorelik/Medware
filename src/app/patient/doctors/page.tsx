@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface Doctor {
   id: string;
@@ -190,22 +192,20 @@ export default function BrowseDoctorsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading doctors...</div>
-      </div>
+      <LoadingScreen label="Loading doctors" />
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Find a Doctor
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Browse available physicians and start an AI-powered consultation
-        </p>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/patient/dashboard" },
+          { label: "Find a doctor" },
+        ]}
+        title="Find a doctor"
+        description="Browse available physicians and start an AI-powered consultation."
+      />
 
       {/* Rating Modal */}
       {ratingModal && (
