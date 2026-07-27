@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 export default function AuthRedirectPage() {
   const { data: session, status } = useSession();
@@ -31,11 +32,8 @@ export default function AuthRedirectPage() {
   }, [session, status, router]);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4" />
-        <p className="text-gray-600">Redirecting...</p>
-      </div>
+    <div className="auth-shell">
+      <LoadingScreen label="Signing you in" />
     </div>
   );
 }

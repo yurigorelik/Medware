@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Doctor {
   id: string;
@@ -190,9 +191,7 @@ export default function BrowseDoctorsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading doctors...</div>
-      </div>
+      <LoadingScreen label="Loading doctors" />
     );
   }
 

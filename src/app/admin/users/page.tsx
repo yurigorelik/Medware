@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface User {
   id: string;
@@ -105,9 +106,7 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading users...</div>
-      </div>
+      <LoadingScreen label="Loading users" />
     );
   }
 

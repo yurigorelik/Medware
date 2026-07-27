@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface SecondOpinion {
   id: string;
@@ -63,9 +64,7 @@ export default function SecondOpinionListPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingScreen label="Loading" />
     );
   }
 

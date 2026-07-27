@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Stats {
   totalUsers: number;
@@ -53,15 +54,13 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-        <div className="animate-pulse text-gray-500">Loading dashboard...</div>
-      </div>
+      <LoadingScreen label="Loading dashboard" />
     );
   }
 
   if (!stats) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-red-500">Failed to load dashboard data</div>
       </div>
     );

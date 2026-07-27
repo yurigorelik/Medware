@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Portal {
   id: string;
@@ -192,9 +193,7 @@ export default function DoctorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading dashboard...</div>
-      </div>
+      <LoadingScreen label="Loading dashboard" />
     );
   }
 

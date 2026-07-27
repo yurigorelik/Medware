@@ -8,6 +8,7 @@ import SocialHistoryChecklist, {
   SocialHistoryData,
   defaultSocialHistory,
 } from "@/components/SocialHistoryChecklist";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Consultation {
   id: string;
@@ -168,9 +169,7 @@ export default function PatientDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading dashboard...</div>
-      </div>
+      <LoadingScreen label="Loading dashboard" />
     );
   }
 

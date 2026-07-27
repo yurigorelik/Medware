@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { statusBadgeClass, statusLabel, formatCost } from "@/lib/visitFormat";
 import SlotRangePicker from "@/components/SlotRangePicker";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Slot {
   id: string;
@@ -105,9 +106,7 @@ export default function VisitDetailPage({ params }: { params: { id: string } }) 
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading visit...</div>
-      </div>
+      <LoadingScreen label="Loading visit" />
     );
   }
 

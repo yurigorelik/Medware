@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface DoctorProfile {
   id: string;
@@ -131,9 +132,7 @@ export default function DoctorProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading profile...</div>
-      </div>
+      <LoadingScreen label="Loading profile" />
     );
   }
 

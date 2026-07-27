@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { statusBadgeClass, statusLabel, formatCost } from "@/lib/visitFormat";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface VisitListItem {
   id: string;
@@ -97,9 +98,7 @@ export default function VisitsHubPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading visits...</div>
-      </div>
+      <LoadingScreen label="Loading visits" />
     );
   }
 

@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface Message {
   id: string;
@@ -107,9 +108,7 @@ export default function SecondOpinionChatPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading consultation...</div>
-      </div>
+      <LoadingScreen label="Loading consultation" />
     );
   }
 

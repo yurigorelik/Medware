@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/States";
 
 export default function EditPortalPage() {
   const params = useParams();
@@ -90,9 +91,7 @@ export default function EditPortalPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading portal...</div>
-      </div>
+      <LoadingScreen label="Loading portal" />
     );
   }
 

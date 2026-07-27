@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SlotRangePicker from "@/components/SlotRangePicker";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface AvailabilitySlot {
   id: string;
@@ -122,9 +123,7 @@ export default function AvailabilityPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingScreen label="Loading" />
     );
   }
 

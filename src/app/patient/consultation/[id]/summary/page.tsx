@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { LoadingScreen } from "@/components/ui/States";
 
 interface SummaryData {
   consultation: {
@@ -83,9 +84,7 @@ export default function PatientSummaryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="text-gray-500">Loading summary...</div>
-      </div>
+      <LoadingScreen label="Loading summary" />
     );
   }
 

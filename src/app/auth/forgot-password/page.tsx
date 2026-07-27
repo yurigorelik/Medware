@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
+      <div className="auth-shell">
         <div className="card max-w-md w-full text-center">
           <div className="mb-4">
             <svg
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
+    <div className="auth-shell">
       <div className="card max-w-md w-full">
         <h1 className="text-2xl font-bold text-center mb-2">Forgot Password</h1>
         <p className="text-gray-600 text-center mb-6">
