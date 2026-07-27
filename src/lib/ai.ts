@@ -1,19 +1,31 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
+// Exported so every caller shares one client rather than constructing its own.
+export const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 // Single place to change the model the whole platform talks to.
 // Override per-deployment with ANTHROPIC_MODEL without touching code.
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+export const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
 // Sonnet 5 runs adaptive thinking when `thinking` is omitted, and max_tokens
 // caps thinking plus response text together. These calls want the whole budget
 // spent on the answer, so thinking is turned off explicitly. Swap to
 // { type: "adaptive" } (and raise max_tokens) if you want the model to reason
 // before answering.
-const THINKING = { type: "disabled" } as const;
+export const THINKING = { type: "disabled" } as const;
+
+/**
+ * Pull the first text block out of a response. The content array is a
+ * discriminated union, so the type predicate narrows it without a cast.
+ */
+export function firstText(message: Anthropic.Message): string {
+  const block = message.content.find(
+    (b): b is Anthropic.TextBlock => b.type === "text"
+  );
+  return block?.text ?? "";
+}
 
 interface PortalConfig {
   doctorName: string;
@@ -336,9 +348,8 @@ export async function getChatResponse(
     messages: anthropicMessages,
   });
 
-  const textBlock = response.content.find((block) => block.type === "text");
   return {
-    text: textBlock ? (textBlock as Anthropic.TextBlock).text : "",
+    text: firstText(response),
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
   };
@@ -384,10 +395,7 @@ ${conversationText}`;
     ],
   });
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  const responseText = textBlock
-    ? (textBlock as Anthropic.TextBlock).text
-    : "";
+  const responseText = firstText(response);
 
   // Strip markdown code blocks if present (e.g. ```json ... ```)
   let cleanedText = responseText.trim();
@@ -486,10 +494,7 @@ ${workupText}`;
     messages: [{ role: "user", content: prompt }],
   });
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  const responseText = textBlock
-    ? (textBlock as Anthropic.TextBlock).text
-    : "";
+  const responseText = firstText(response);
 
   let cleanedText = responseText.trim();
   const codeBlockMatch = cleanedText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
