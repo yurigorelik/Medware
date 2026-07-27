@@ -248,6 +248,9 @@ export default function Home() {
       )}
 
       {/* --------------------------------------------------------- doctors */}
+      {/* Skipped entirely once we know there are no doctors to show, rather
+          than leaving an empty grid under a heading. */}
+      {(loadingDoctors || doctors.length > 0) && (
       <section className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto mb-12 max-w-2xl text-center">
@@ -277,6 +280,7 @@ export default function Home() {
           )}
         </div>
       </section>
+      )}
 
       {/* ---------------------------------------------------- how it works */}
       <section className="border-t border-gray-200 bg-gray-50/60 py-20">

@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -79,7 +80,15 @@ export default function SignUpPage() {
   return (
     <div className="auth-shell">
       <div className="card max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Logo href="/" />
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-gray-900">
+            Create your account
+          </h1>
+          <p className="mt-1.5 text-sm text-gray-500">
+            It takes under a minute to get started.
+          </p>
+        </div>
 
         {error && (
           <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
