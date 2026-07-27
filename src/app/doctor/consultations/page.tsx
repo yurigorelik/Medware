@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoadingScreen } from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface Consultation {
   id: string;
@@ -106,20 +108,25 @@ export default function DoctorConsultationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Consultations</h1>
-        <Link
-          href="/doctor/dashboard"
-          className="btn-secondary text-sm"
-        >
-          &larr; Dashboard
-        </Link>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Dashboard", href: "/doctor/dashboard" },
+          { label: "Consultations" },
+        ]}
+        title="Consultations"
+        description="Review, respond to, and sign off on patient cases."
+        actions={
+          <Link href="/doctor/dashboard" className="btn-secondary">
+            <Icon name="dashboard" className="h-4 w-4" />
+            Dashboard
+          </Link>
+        }
+      />
 
       {/* Action Message */}
       {actionMessage && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${actionMessage.includes("Failed") || actionMessage.includes("error") ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600"}`}>
+        <div className={`mb-4 ${actionMessage.includes("Failed") || actionMessage.includes("error") ? "alert-error" : "alert-success"}`}>
           {actionMessage}
         </div>
       )}

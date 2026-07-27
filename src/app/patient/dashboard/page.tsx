@@ -8,7 +8,13 @@ import SocialHistoryChecklist, {
   SocialHistoryData,
   defaultSocialHistory,
 } from "@/components/SocialHistoryChecklist";
-import { LoadingScreen } from "@/components/ui/States";
+import {
+  EmptyState,
+  LoadingScreen,
+  StatCard,
+} from "@/components/ui/States";
+import PageHeader from "@/components/ui/PageHeader";
+import Icon from "@/components/ui/Icon";
 
 interface Consultation {
   id: string;
@@ -215,29 +221,37 @@ export default function PatientDashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome, {session?.user?.name}
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Manage your medical consultations
-        </p>
-      </div>
+    <div className="page-shell">
+      <PageHeader
+        title={`Welcome, ${session?.user?.name ?? ""}`}
+        description="Manage your medical consultations and keep your profile up to date."
+        actions={
+          <Link href="/patient/doctors" className="btn-primary">
+            <Icon name="search" className="h-4 w-4" />
+            Browse doctors
+          </Link>
+        }
+      />
 
       {/* Quick Actions */}
-      <div className="card mb-8 bg-gradient-to-r from-primary-50 to-blue-50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-primary-800">
-              Start a New Consultation
-            </h2>
-            <p className="text-primary-600 text-sm mt-1">
-              Browse available doctors and begin an AI-powered consultation
-            </p>
+      <div className="card-accent mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="icon-tile bg-primary-100 text-primary-700">
+              <Icon name="sparkles" className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-semibold text-primary-900">
+                Start a new consultation
+              </h2>
+              <p className="mt-1 text-sm text-primary-700/80">
+                Browse available doctors and begin an AI-powered consultation
+              </p>
+            </div>
           </div>
-          <Link href="/patient/doctors" className="btn-primary">
-            Browse Doctors
+          <Link href="/patient/doctors" className="btn-primary flex-shrink-0">
+            Browse doctors
+            <Icon name="arrowRight" className="h-4 w-4" />
           </Link>
         </div>
       </div>
@@ -410,40 +424,37 @@ export default function PatientDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="card">
-          <div className="text-3xl font-bold text-blue-600">
-            {active.length}
-          </div>
-          <div className="text-sm text-gray-600">Active Consultations</div>
-        </div>
-        <div className="card">
-          <div className="text-3xl font-bold text-yellow-600">
-            {awaitingReview.length}
-          </div>
-          <div className="text-sm text-gray-600">Awaiting Doctor Review</div>
-        </div>
-        <div className="card">
-          <div className="text-3xl font-bold text-green-600">
-            {completed.length}
-          </div>
-          <div className="text-sm text-gray-600">Completed</div>
-        </div>
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          label="Active consultations"
+          value={active.length}
+          icon="activity"
+          tone="primary"
+        />
+        <StatCard
+          label="Awaiting doctor review"
+          value={awaitingReview.length}
+          icon="clock"
+          tone="amber"
+        />
+        <StatCard
+          label="Completed"
+          value={completed.length}
+          icon="check"
+          tone="emerald"
+        />
       </div>
 
       {/* Consultations List */}
-      <h2 className="text-lg font-semibold mb-4">Your Consultations</h2>
+      <h2 className="section-title mb-4">Your consultations</h2>
       {consultations.length === 0 ? (
-        <div className="card text-center text-gray-500 py-12">
-          You haven&apos;t started any consultations yet.
-          <br />
-          <Link
-            href="/patient/doctors"
-            className="text-primary-600 hover:text-primary-700 mt-2 inline-block"
-          >
-            Browse doctors to get started &rarr;
-          </Link>
-        </div>
+        <EmptyState
+          icon="message"
+          title="No consultations yet"
+          description="Pick a specialist and start an AI-guided consultation — your chosen doctor reviews and approves everything before it reaches you."
+          actionLabel="Browse doctors"
+          actionHref="/patient/doctors"
+        />
       ) : (
         <div className="space-y-3">
           {consultations.map((c) => {
@@ -452,21 +463,26 @@ export default function PatientDashboard() {
             return (
               <div
                 key={c.id}
-                className="card flex items-center justify-between"
+                className="card-interactive flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <div className="font-medium">
-                    Dr. {c.portal.doctorProfile.user.name}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {c.portal.medicalField} &middot; {c.portal.name}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Started {new Date(c.createdAt).toLocaleDateString()}{" "}
-                    &middot; {c._count.messages} messages
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="icon-tile bg-primary-50 text-primary-600">
+                    <Icon name="stethoscope" className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-gray-900">
+                      Dr. {c.portal.doctorProfile.user.name}
+                    </div>
+                    <div className="truncate text-sm text-gray-500">
+                      {c.portal.medicalField} &middot; {c.portal.name}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-400">
+                      Started {new Date(c.createdAt).toLocaleDateString()}{" "}
+                      &middot; {c._count.messages} messages
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-3">
                   <span className={status.className}>{status.text}</span>
                   <Link
                     href={action.href}
